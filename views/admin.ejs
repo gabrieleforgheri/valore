@@ -10,97 +10,205 @@
         body { background: #f3f4f6; }
         .drag-handle { cursor: grab; }
         .drag-handle:active { cursor: grabbing; }
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
     </style>
 </head>
-<body class="text-gray-800 font-sans antialiased">
-    <div id="app" class="min-h-screen pb-12">
+<body class="text-gray-800 font-sans antialiased overflow-x-hidden">
+    <div id="app" class="min-h-screen pb-20">
         <!-- Navbar -->
-        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-            <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-3">
+        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+                <div class="flex items-center gap-6">
                     <img :src="'/' + profile.image" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100">
-                    <h1 class="text-xl font-bold text-gray-900">Gestione Linktree</h1>
+                    <div class="hidden sm:flex gap-1">
+                        <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Links</button>
+                        <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
+                    </div>
                 </div>
                 <div class="flex gap-3">
-                    <a href="/" target="_blank" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">Vedi Sito</a>
-                    <button @click="save" class="px-4 py-2 text-sm font-semibold text-white bg-black hover:bg-gray-800 rounded-full transition-colors shadow-md flex items-center gap-2">
+                    <button @click="showMobilePreview = !showMobilePreview" class="md:hidden px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full">Anteprima</button>
+                    <a href="/" target="_blank" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors hidden sm:block">Vedi Sito</a>
+                    <button @click="save" class="px-5 py-2 text-sm font-semibold text-white bg-black hover:bg-gray-800 rounded-full transition-colors shadow-md flex items-center gap-2">
                         <span v-if="saving">Salvataggio...</span>
-                        <span v-else>Salva Modifiche</span>
+                        <span v-else>Pubblica Modifiche</span>
                     </button>
                 </div>
             </div>
+            <!-- Mobile Tabs -->
+            <div class="sm:hidden flex border-t border-gray-100">
+                <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Links</button>
+                <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
+            </div>
         </nav>
 
-        <div class="max-w-4xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-12 gap-8">
             
             <!-- Left Column: Editor -->
-            <div class="md:col-span-2 space-y-6">
-                <!-- Profile Section -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold mb-4">Profilo</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-1">Nome Profilo</label>
-                            <input v-model="profile.name" type="text" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+            <div class="md:col-span-7 lg:col-span-8 space-y-6">
+                
+                <!-- LINKS TAB -->
+                <div v-show="currentTab === 'links'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-4">Profilo</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Nome Profilo</label>
+                                <input v-model="profile.name" @input="debouncedUpdatePreview" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Bio / Descrizione</label>
+                                <input v-model="profile.description" @input="debouncedUpdatePreview" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all" placeholder="Scrivi qualcosa su di te...">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-1">Bio / Descrizione</label>
-                            <input v-model="profile.description" type="text" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                            <h2 class="text-lg font-bold">I tuoi Link</h2>
+                            <button @click="addLink" class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-full transition-colors shadow-sm text-center">
+                                + Aggiungi Link
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div v-for="(link, index) in links" :key="link.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-4 transition-all relative group hover:border-gray-300">
+                                
+                                <!-- Move buttons -->
+                                <div class="flex flex-col justify-center items-center gap-1 text-gray-300">
+                                    <button @click="moveUp(index)" :disabled="index === 0" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                    <button @click="moveDown(index)" :disabled="index === links.length - 1" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                </div>
+
+                                <!-- Link form -->
+                                <div class="flex-1 space-y-3">
+                                    <div class="flex gap-3">
+                                        <div class="flex-1">
+                                            <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-purple-500 rounded-none text-md font-bold focus:outline-none transition-colors">
+                                        </div>
+                                        <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL (es. https://...)" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-gray-400 rounded-none text-sm text-gray-600 focus:outline-none transition-colors">
+                                    </div>
+                                    <div v-if="link.featured">
+                                        <input v-model="link.thumbnail" @input="debouncedUpdatePreview" placeholder="URL Immagine Grande (opzionale)" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 mt-2">
+                                    </div>
+                                    <div class="pt-2 flex items-center justify-between border-t border-gray-100">
+                                        <div class="flex items-center gap-2">
+                                            <svg width="16" height="16" fill="currentColor" class="text-yellow-500" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                                            <span class="text-xs font-semibold text-gray-600">In Evidenza</span>
+                                        </div>
+                                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                            <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all border-gray-300"/>
+                                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Links Section -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-lg font-bold">I tuoi Link</h2>
-                        <button @click="addLink" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-full transition-colors shadow-sm">
-                            + Aggiungi Link
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div v-for="(link, index) in links" :key="link.id" class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex gap-4 transition-all relative group">
-                            
-                            <!-- Move buttons -->
-                            <div class="flex flex-col justify-center items-center gap-1 text-gray-400">
-                                <button @click="moveUp(index)" :disabled="index === 0" class="hover:text-black disabled:opacity-30"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                                <button @click="moveDown(index)" :disabled="index === links.length - 1" class="hover:text-black disabled:opacity-30"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                <!-- APPEARANCE TAB -->
+                <div v-show="currentTab === 'appearance'" class="space-y-6">
+                    
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-6">Sfondo</h2>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div @click="theme.bgType = 'color'; debouncedUpdatePreview()" :class="theme.bgType === 'color' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
+                                <div class="w-full h-16 rounded-lg bg-gray-200 mb-2"></div>
+                                <span class="text-sm font-semibold">Tinta Unita</span>
                             </div>
+                            <div @click="theme.bgType = 'gradient'; debouncedUpdatePreview()" :class="theme.bgType === 'gradient' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
+                                <div class="w-full h-16 rounded-lg bg-gradient-to-b from-gray-300 to-gray-500 mb-2"></div>
+                                <span class="text-sm font-semibold">Sfumatura</span>
+                            </div>
+                        </div>
 
-                            <!-- Link form -->
-                            <div class="flex-1 space-y-3">
-                                <div class="flex gap-3">
-                                    <div class="flex-1">
-                                        <input v-model="link.title" placeholder="Titolo (es. Spotify)" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <label class="text-xs text-gray-500 font-medium">In Evidenza?</label>
-                                        <input type="checkbox" v-model="link.featured" class="w-4 h-4 text-purple-600 rounded">
-                                    </div>
-                                    <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-1 transition-colors">
-                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Primario</label>
+                                <div class="flex items-center gap-3">
+                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
+                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
                                 </div>
-                                <div>
-                                    <input v-model="link.url" placeholder="URL (es. https://...)" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                </div>
-                                <div v-if="link.featured">
-                                    <input v-model="link.thumbnail" placeholder="URL Immagine (opzionale)" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div v-if="theme.bgType === 'gradient'">
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Secondario</label>
+                                <div class="flex items-center gap-3">
+                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
+                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-6">Pulsanti</h2>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                            <div @click="theme.btnRadius = '0px'; debouncedUpdatePreview()" :class="theme.btnRadius === '0px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <div class="w-16 h-8 bg-black mb-2"></div>
+                                <span class="text-xs font-semibold">Squadrati</span>
+                            </div>
+                            <div @click="theme.btnRadius = '8px'; debouncedUpdatePreview()" :class="theme.btnRadius === '8px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <div class="w-16 h-8 bg-black rounded-lg mb-2"></div>
+                                <span class="text-xs font-semibold">Smussati</span>
+                            </div>
+                            <div @click="theme.btnRadius = '24px'; debouncedUpdatePreview()" :class="theme.btnRadius === '24px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <div class="w-16 h-8 bg-black rounded-full mb-2"></div>
+                                <span class="text-xs font-semibold">Arrotondati</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Stile Pulsante</label>
+                                <select v-model="theme.btnBg" @change="debouncedUpdatePreview" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                                    <option value="transparent">Outline (Bordo sottile)</option>
+                                    <option value="#ffffff">Bianco Solido</option>
+                                    <option value="#000000">Nero Solido</option>
+                                    <option value="#ea73e6">Rosa Valore</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Testo Pulsante</label>
+                                <div class="flex items-center gap-3">
+                                    <input v-model="theme.btnText" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
+                                    <input v-model="theme.btnText" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-6">Testo</h2>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">Colore Testo Pagina</label>
+                            <div class="flex items-center gap-3">
+                                <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
+                                <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
 
             <!-- Right Column: Live Preview -->
-            <div class="hidden md:block">
-                <div class="sticky top-24 border-[8px] border-black rounded-[3rem] overflow-hidden bg-gray-900 shadow-2xl h-[700px] w-full max-w-[340px] mx-auto flex flex-col relative">
+            <div :class="showMobilePreview ? 'fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4' : 'hidden md:block md:col-span-5 lg:col-span-4'">
+                <div class="sticky top-24 border-[8px] border-black rounded-[3rem] overflow-hidden shadow-2xl h-[700px] w-full max-w-[340px] mx-auto flex flex-col relative transition-all" :class="showMobilePreview ? 'scale-100' : ''">
                     <div class="absolute top-0 inset-x-0 h-6 bg-black z-20 flex justify-center rounded-b-xl w-32 mx-auto"></div>
-                    <iframe id="preview-frame" src="/" class="w-full h-full border-0 bg-transparent z-10"></iframe>
+                    <iframe id="preview-frame" src="/preview" class="w-full h-full border-0 bg-white z-10"></iframe>
+                    
+                    <button v-if="showMobilePreview" @click="showMobilePreview = false" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-sm z-30">Chiudi</button>
                 </div>
-                <p class="text-center text-xs text-gray-500 mt-4">Anteprima dal vivo. Salva per aggiornare.</p>
             </div>
             
         </div>
@@ -114,9 +222,16 @@
         createApp({
             data() {
                 return {
+                    currentTab: 'links',
+                    showMobilePreview: false,
                     profile: initialData.profile,
+                    theme: initialData.theme || {
+                        bgType: 'gradient', bgColor1: '#0B152C', bgColor2: '#4E769B',
+                        fontColor: '#ffffff', btnBg: 'transparent', btnText: '#fce7ff', btnRadius: '6px'
+                    },
                     links: initialData.links,
-                    saving: false
+                    saving: false,
+                    previewTimeout: null
                 }
             },
             methods: {
@@ -128,10 +243,12 @@
                         featured: false,
                         thumbnail: ''
                     });
+                    this.debouncedUpdatePreview();
                 },
                 removeLink(index) {
                     if(confirm('Sei sicuro di voler eliminare questo link?')) {
                         this.links.splice(index, 1);
+                        this.debouncedUpdatePreview();
                     }
                 },
                 moveUp(index) {
@@ -139,6 +256,7 @@
                         const temp = this.links[index];
                         this.links[index] = this.links[index - 1];
                         this.links[index - 1] = temp;
+                        this.debouncedUpdatePreview();
                     }
                 },
                 moveDown(index) {
@@ -146,6 +264,32 @@
                         const temp = this.links[index];
                         this.links[index] = this.links[index + 1];
                         this.links[index + 1] = temp;
+                        this.debouncedUpdatePreview();
+                    }
+                },
+                debouncedUpdatePreview() {
+                    clearTimeout(this.previewTimeout);
+                    this.previewTimeout = setTimeout(() => {
+                        this.updatePreview();
+                    }, 500); // Wait 500ms after last typing before updating
+                },
+                async updatePreview() {
+                    try {
+                        const res = await fetch('/admin/preview', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                profile: this.profile,
+                                theme: this.theme,
+                                links: this.links
+                            })
+                        });
+                        if (res.ok) {
+                            const iframe = document.getElementById('preview-frame');
+                            iframe.contentWindow.location.reload();
+                        }
+                    } catch (e) {
+                        console.error('Preview update failed', e);
                     }
                 },
                 async save() {
@@ -156,11 +300,12 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 profile: this.profile,
+                                theme: this.theme,
                                 links: this.links
                             })
                         });
                         if (res.ok) {
-                            document.getElementById('preview-frame').src = document.getElementById('preview-frame').src;
+                            alert('Modifiche pubblicate con successo!');
                         } else {
                             alert('Errore nel salvataggio');
                         }
