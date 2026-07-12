@@ -24,9 +24,11 @@ function getData() {
     let data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
     if (!data.theme) {
         data.theme = {
-            bgType: 'color',
-            bgColor1: '#5B4E71',
-            bgColor2: '#5B4E71',
+            bgType: 'gradient',
+            bgColor1: '#0B152C',
+            bgColor2: '#4E769B',
+            bgGlow: 'rgba(234,115,230,0.80)',
+            bgGlowEnd: 'rgba(234,115,230,0.00)',
             fontColor: '#fce7ff',
             btnBg: 'transparent',
             btnText: '#fce7ff',
