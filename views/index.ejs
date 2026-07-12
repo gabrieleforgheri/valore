@@ -13,9 +13,11 @@
     color: var(--bodyText) !important;
   }
   
-  #profile-background, #profile-background-backdrop, .sc-bRKDuR.sc-hjsuWn, #profile-page-root {
+  #profile-background, #profile-background-backdrop, .sc-bRKDuR.sc-hjsuWn, #profile-page-root,
+  #profile-backdrop > div > div > div > .sc-bRKDuR,
+  #profile-backdrop > div > div > div > .sc-bRKDuR > div {
     <% if(theme.bgType === 'gradient') { %>
-      background: linear-gradient(180deg, <%= theme.bgColor1 %> 0%, <%= theme.bgColor2 %> 100%) !important;
+      background: radial-gradient(75% 50% at 50% 50%, rgba(234,115,230,0.80) 7%, rgba(234,115,230,0.00) 88%), linear-gradient(180deg, <%= theme.bgColor1 %> 0%, <%= theme.bgColor2 %> 100%) !important;
     <% } else { %>
       background: <%= theme.bgColor1 %> !important;
     <% } %>
