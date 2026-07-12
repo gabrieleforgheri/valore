@@ -1,0 +1,44 @@
+{
+  "profile": {
+    "name": "Valore",
+    "description": "",
+    "image": "images/30254ecc-d606-4323-a460-46d8c30f0062_FotoProfiloFinale.png"
+  },
+  "links": [
+    {
+      "id": "1",
+      "title": "ASCOLTA STAR",
+      "url": "https://open.spotify.com/intl-it/track/7ijBMRypP26HhCStJoIWdn?si=2d2f3324cf6b47b4",
+      "thumbnail": "images/03415876-0ef7-45f7-be41-6e01f7c70d87_ab67616d0000b27396abb207efeec47f8b50879f.jpeg",
+      "featured": true
+    },
+    {
+      "id": "2",
+      "title": "Spotify",
+      "url": "https://open.spotify.com/intl-it/artist/3vO9rAZ7FTlGRwMKXtAerh?si=7Fsg43CTSrmze-xSQ5jTag",
+      "thumbnail": "images/db7e94b7-a4ca-4463-a3c8-28bd29e67c8b_ab67616d0000b27356bf19bf312d8d9731d88b76.jpeg",
+      "featured": false
+    },
+    {
+      "id": "3",
+      "title": "Instagram",
+      "url": "https://www.instagram.com/rarestvalore",
+      "thumbnail": "images/c4a39a94-d504-42bb-bc5b-d4a6cb7f9561_FotoProfiloFinale.png",
+      "featured": false
+    },
+    {
+      "id": "4",
+      "title": "TikTok",
+      "url": "https://www.tiktok.com/@rarestvalore",
+      "thumbnail": "images/baa49f59-a6a1-466c-b44b-a7d19774311d_FotoProfiloFinale.png",
+      "featured": false
+    },
+    {
+      "id": "5",
+      "title": "YouTube",
+      "url": "https://www.youtube.com/channel/UCjy1c1z5tpb1sHPLVarhv1w",
+      "thumbnail": "images/fd06b6e2-b6d4-460d-bfa7-1071360be7fc_Rx-M1mfcJcVjDbeHracKOjax9AZhhv0bQE0-WvyzyWGc79nP87C9fi-V9Mz9dntkOR-7lTm6oFo-s900-c-k-c0x00ffffff-no-.jpeg",
+      "featured": false
+    }
+  ]
+}

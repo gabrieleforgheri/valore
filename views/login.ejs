@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Valore Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: linear-gradient(135deg, #0B152C 0%, #4E769B 100%); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center font-sans text-white">
+    <div class="bg-white/10 p-8 rounded-2xl shadow-xl backdrop-blur-md w-full max-w-sm border border-white/20">
+        <div class="flex justify-center mb-6">
+            <img src="/images/30254ecc-d606-4323-a460-46d8c30f0062_FotoProfiloFinale.png" class="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg object-cover">
+        </div>
+        <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
+        <form action="/admin/login" method="POST" class="flex flex-col gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" name="password" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 text-white placeholder-gray-300" placeholder="Inserisci password...">
+            </div>
+            <button type="submit" class="w-full mt-2 bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-lg">
+                Entra
+            </button>
+        </form>
+    </div>
+</body>
+</html>
