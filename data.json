@@ -40,5 +40,15 @@
       "thumbnail": "images/fd06b6e2-b6d4-460d-bfa7-1071360be7fc_Rx-M1mfcJcVjDbeHracKOjax9AZhhv0bQE0-WvyzyWGc79nP87C9fi-V9Mz9dntkOR-7lTm6oFo-s900-c-k-c0x00ffffff-no-.jpeg",
       "featured": false
     }
-  ]
+  ],
+  "theme": {
+    "bgType": "color",
+    "bgColor1": "#5B4E71",
+    "bgColor2": "#5B4E71",
+    "fontColor": "#fce7ff",
+    "btnBg": "transparent",
+    "btnText": "#fce7ff",
+    "btnRadius": "0",
+    "fontFamily": "IBM Plex Sans"
+  }
 }

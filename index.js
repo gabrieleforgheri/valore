@@ -24,13 +24,13 @@ function getData() {
     let data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
     if (!data.theme) {
         data.theme = {
-            bgType: 'gradient',
-            bgColor1: '#0B152C',
-            bgColor2: '#4E769B',
-            fontColor: '#ffffff',
+            bgType: 'color',
+            bgColor1: '#5B4E71',
+            bgColor2: '#5B4E71',
+            fontColor: '#fce7ff',
             btnBg: 'transparent',
             btnText: '#fce7ff',
-            btnRadius: '6px',
+            btnRadius: '0',
             fontFamily: 'IBM Plex Sans'
         };
     }
