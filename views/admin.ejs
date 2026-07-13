@@ -25,6 +25,7 @@
                     <div class="hidden sm:flex gap-1">
                         <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Links</button>
                         <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
+                        <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -40,6 +41,7 @@
             <div class="sm:hidden flex border-t border-gray-100">
                 <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Links</button>
                 <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
+                <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
             </div>
         </nav>
 
@@ -197,6 +199,37 @@
                         </div>
                     </div>
 
+                </div>
+
+                <!-- STATISTICHE TAB -->
+                <div v-show="currentTab === 'stats'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-bold mb-6">Panoramica</h2>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="p-6 bg-purple-50 rounded-2xl border border-purple-100 text-center">
+                                <p class="text-sm text-purple-600 font-semibold mb-1">Visite Totali</p>
+                                <p class="text-4xl font-black text-purple-900"><%= stats ? stats.totalVisits : 0 %></p>
+                            </div>
+                            <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+                                <p class="text-sm text-blue-600 font-semibold mb-1">Click Totali</p>
+                                <p class="text-4xl font-black text-blue-900"><%= stats ? stats.totalClicks : 0 %></p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-bold mb-4">Click sui Link (Top 10)</h3>
+                        <div class="space-y-3">
+                            <% if (!stats || stats.topLinks.length === 0) { %>
+                                <p class="text-gray-500 text-sm italic">Nessun click registrato ancora.</p>
+                            <% } else { %>
+                                <% stats.topLinks.forEach(link => { %>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <span class="text-sm font-medium text-gray-700 truncate max-w-[70%]"><%= link.linkUrl %></span>
+                                    <span class="px-3 py-1 bg-black text-white text-xs font-bold rounded-full"><%= link.count %></span>
+                                </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
                 </div>
 
             </div>
