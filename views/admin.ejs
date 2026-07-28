@@ -142,10 +142,20 @@
                             </div>
                             <div v-if="theme.bgType === 'gradient'">
                                 <label class="block text-sm font-medium text-gray-600 mb-1">Colore Secondario</label>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-3 mb-4">
                                     <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
                                     <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
                                 </div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Direzione Sfumatura</label>
+                                <select v-model="theme.gradientDirection" @change="debouncedUpdatePreview" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                                    <option value="to bottom">Dall'alto verso il basso (↓)</option>
+                                    <option value="to right">Da sinistra a destra (→)</option>
+                                    <option value="to left">Da destra a sinistra (←)</option>
+                                    <option value="to top">Dal basso verso l'alto (↑)</option>
+                                    <option value="radial">Dal centro all'esterno (Circolare)</option>
+                                    <option value="135deg">Diagonale (in alto a sx → in basso a dx)</option>
+                                    <option value="225deg">Diagonale (in alto a dx → in basso a sx)</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -154,15 +164,15 @@
                         <h2 class="text-lg font-bold mb-6">Pulsanti</h2>
                         
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                            <div @click="theme.btnRadius = '0px'; debouncedUpdatePreview()" :class="theme.btnRadius === '0px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                            <div @click="theme.btnRadius = '0px'; debouncedUpdatePreview()" :class="theme.btnRadius === '0px' || theme.btnRadius === '0' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
                                 <div class="w-16 h-8 bg-black mb-2"></div>
                                 <span class="text-xs font-semibold">Squadrati</span>
                             </div>
-                            <div @click="theme.btnRadius = '8px'; debouncedUpdatePreview()" :class="theme.btnRadius === '8px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                            <div @click="theme.btnRadius = '8px'; debouncedUpdatePreview()" :class="theme.btnRadius === '8px' || theme.btnRadius === '8' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
                                 <div class="w-16 h-8 bg-black rounded-lg mb-2"></div>
                                 <span class="text-xs font-semibold">Smussati</span>
                             </div>
-                            <div @click="theme.btnRadius = '24px'; debouncedUpdatePreview()" :class="theme.btnRadius === '24px' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                            <div @click="theme.btnRadius = '50px'; debouncedUpdatePreview()" :class="theme.btnRadius === '50px' || theme.btnRadius === '24px' || theme.btnRadius === '24' || theme.btnRadius === '9999px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
                                 <div class="w-16 h-8 bg-black rounded-full mb-2"></div>
                                 <span class="text-xs font-semibold">Arrotondati</span>
                             </div>
@@ -259,8 +269,8 @@
                     showMobilePreview: false,
                     profile: initialData.profile,
                     theme: initialData.theme || {
-                        bgType: 'gradient', bgColor1: '#0B152C', bgColor2: '#4E769B',
-                        fontColor: '#ffffff', btnBg: 'transparent', btnText: '#fce7ff', btnRadius: '6px'
+                        bgType: 'gradient', gradientDirection: 'to bottom', bgColor1: '#0B152C', bgColor2: '#4E769B',
+                        fontColor: '#ffffff', btnBg: 'transparent', btnText: '#fce7ff', btnRadius: '0px'
                     },
                     links: initialData.links,
                     saving: false,

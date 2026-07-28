@@ -44,6 +44,7 @@ function getData() {
     if (!data.theme) {
         data.theme = {
             bgType: 'gradient',
+            gradientDirection: 'to bottom',
             bgColor1: '#0B152C',
             bgColor2: '#4E769B',
             bgGlow: 'rgba(234,115,230,0.80)',
