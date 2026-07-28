@@ -11,7 +11,6 @@
         body { background: #f3f4f6; }
         .drag-handle { cursor: grab; }
         .drag-handle:active { cursor: grabbing; }
-        /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #68D391; }
         .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
     </style>
@@ -22,13 +21,13 @@
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
             <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
                 <div class="flex items-center gap-6">
-                    <img :src="'/' + profile.image" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100">
+                    <img :src="profile.image ? (profile.image.startsWith('http') || profile.image.startsWith('data:') ? profile.image : '/' + profile.image) : '/images/FotoProfiloFinale.png'" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100">
                     <div class="hidden sm:flex gap-1">
                         <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Links</button>
                         <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Socials</button>
                         <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
                         <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
-                        <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors flex items-center gap-1"><span>🧩</span> Sezioni</button>
+                        <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Sezioni</button>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -47,7 +46,7 @@
                 <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Socials</button>
                 <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
                 <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
-                <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm flex items-center justify-center gap-1"><span>🧩</span> Sezioni</button>
+                <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Sezioni</button>
             </div>
         </nav>
 
@@ -58,19 +57,22 @@
                 
                 <!-- LINKS TAB -->
                 <div v-show="currentTab === 'links'" class="space-y-6">
+                    <!-- Profile Header Block -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold mb-4">Profilo</h2>
                         <div class="space-y-4">
                             <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                <img :src="profile.image ? (profile.image.startsWith('http') || profile.image.startsWith('data:') ? profile.image : '/' + profile.image) : ''" class="w-16 h-16 rounded-full object-cover shadow border border-white shrink-0">
+                                <img :src="profile.image ? (profile.image.startsWith('http') || profile.image.startsWith('data:') ? profile.image : '/' + profile.image) : ''" class="w-14 h-14 rounded-full object-cover shadow border border-white shrink-0">
                                 <div class="flex-1 min-w-0">
-                                    <label class="block text-xs font-bold text-gray-600 mb-1">Foto Profilo</label>
+                                    <label class="block text-xs font-bold text-gray-600 mb-2">Foto Profilo</label>
                                     <div class="flex gap-2">
-                                        <input v-model="profile.image" @input="debouncedUpdatePreview" type="text" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs min-w-0" placeholder="URL o percorso immagine">
-                                        <label class="px-3 py-2 bg-black hover:bg-gray-800 text-white font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-sm">
-                                            <span>Carica Foto</span>
+                                        <label class="px-4 py-2 bg-black hover:bg-gray-800 text-white font-semibold rounded-lg text-xs cursor-pointer transition-colors inline-flex items-center gap-1 shadow-sm">
+                                            <span>Carica Nuova Foto</span>
                                             <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => profile.image = url)">
                                         </label>
+                                        <button v-if="profile.image" @click="profile.image = ''; debouncedUpdatePreview()" type="button" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs transition-colors shadow-sm">
+                                            Rimuovi
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +114,7 @@
                                                     <input v-model="profile.businessMailColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs uppercase" placeholder="rgba(...) o hex">
                                                 </div>
                                                 <div v-else class="px-3 py-2 bg-gray-100 rounded-lg text-xs text-gray-500 italic text-center">
-                                                    Sfondo reso trasparente
+                                                    Sfondo trasparente
                                                 </div>
                                             </div>
                                             <div>
@@ -129,104 +131,119 @@
                         </div>
                     </div>
 
+                    <!-- Links Management Block (Compact & Minimal) -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                            <h2 class="text-lg font-bold">I tuoi Link <span class="text-xs font-normal text-gray-400 ml-1">(Trascina per ordinare)</span></h2>
-                            <button @click="addLink" class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-full transition-colors shadow-sm text-center">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-lg font-bold">I tuoi Link</h2>
+                                <p class="text-xs text-gray-400">Trascina le schede per riordinare i link</p>
+                            </div>
+                            <button @click="addLink" class="px-5 py-2.5 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-full transition-colors shadow-sm">
                                 + Aggiungi Link
                             </button>
                         </div>
 
-                        <div class="space-y-4" ref="linksList">
-                            <div v-for="(link, index) in links" :key="link.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-3 transition-all relative group hover:border-gray-300">
+                        <div class="space-y-3" ref="linksList">
+                            <div v-for="(link, index) in links" :key="link.id" class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm transition-all relative group hover:border-gray-300 space-y-2.5">
                                 
-                                <!-- Move & Drag handle -->
-                                <div class="flex flex-col justify-center items-center gap-1 text-gray-400">
-                                    <div class="drag-handle p-1.5 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-grab active:cursor-grabbing" title="Trascina per spostare">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                                <!-- Header Row: Drag, Title, Delete -->
+                                <div class="flex items-center gap-2">
+                                    <div class="drag-handle p-1 text-gray-400 hover:text-black rounded cursor-grab active:cursor-grabbing shrink-0" title="Trascina per riordinare">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                                     </div>
+                                    <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo del Link" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                    <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-1.5 transition-colors shrink-0" title="Elimina link">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
                                 </div>
 
-                                <!-- Link form -->
-                                <div class="flex-1 space-y-3 min-w-0">
-                                    <div class="flex gap-3">
-                                        <div class="flex-1">
-                                            <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo Link" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-purple-500 rounded-none text-md font-bold focus:outline-none transition-colors">
-                                        </div>
-                                        <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0" title="Elimina link">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL (es. https://...)" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-gray-400 rounded-none text-sm text-gray-600 focus:outline-none transition-colors">
-                                    </div>
-                                    <div class="pt-1">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Sottotitolo</label>
-                                        <div class="flex gap-2">
-                                            <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                            <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg text-xs transition-colors shrink-0 flex items-center gap-1" title="Rileva nome utente in automatico">
-                                                <span>✨ Auto-rileva</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="pt-1">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Immagine</label>
-                                        <div class="flex gap-3 items-center">
-                                            <img v-if="link.thumbnail" :src="link.thumbnail" class="w-10 h-10 rounded-md object-cover shadow-sm shrink-0 border border-gray-200 bg-white">
-                                            <div v-else class="w-10 h-10 rounded-md bg-gray-100 border border-gray-200 border-dashed flex items-center justify-center shrink-0">
-                                                <svg width="16" height="16" fill="currentColor" class="text-gray-400" viewBox="0 0 16 16"><path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3zM10.5 7a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z"/><path d="M2 10.5l4-4a.5.5 0 0 1 .71 0l3 3 2.5-2.5a.5.5 0 0 1 .71 0l3 3V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3.5z"/></svg>
-                                            </div>
-                                            <label class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors flex-1 text-center shadow-sm">
-                                                <span>Carica Foto</span>
-                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => link.thumbnail = url)">
+                                <!-- URL Field -->
+                                <div>
+                                    <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL destinazione (es. https://...)" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                </div>
+
+                                <!-- Subtitle Field + Auto-detect -->
+                                <div class="flex gap-2 items-center">
+                                    <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="Sottotitolo (opzionale)" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                    <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-xl text-xs transition-colors shrink-0 flex items-center gap-1" title="Rileva dati in automatico">
+                                        <span>✨ Auto-rileva</span>
+                                    </button>
+                                </div>
+
+                                <!-- Options Grid (Compact Controls) -->
+                                <div class="pt-2 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                    
+                                    <!-- Image Action -->
+                                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                                        <span class="font-semibold text-gray-600 text-xs">Immagine</span>
+                                        <div class="flex gap-1.5">
+                                            <label class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors">
+                                                <span>{{ link.thumbnail ? 'Modifica' : 'Carica' }}</span>
+                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => { link.thumbnail = url; debouncedUpdatePreview(); })">
                                             </label>
-                                            <button v-if="link.thumbnail" @click="link.thumbnail = ''; debouncedUpdatePreview()" type="button" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs shrink-0 transition-colors shadow-sm" title="Rimuovi Immagine">Rimuovi</button>
+                                            <button v-if="link.thumbnail" @click="link.thumbnail = ''; debouncedUpdatePreview()" type="button" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs transition-colors">Rimuovi</button>
                                         </div>
                                     </div>
-                                    <div class="pt-2 flex items-center justify-between border-t border-gray-100">
-                                        <div class="flex items-center gap-2">
-                                            <svg width="16" height="16" fill="currentColor" class="text-yellow-500" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
-                                            <span class="text-xs font-semibold text-gray-600">In Evidenza</span>
+
+                                    <!-- Icon Selector Combobox -->
+                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="font-semibold text-gray-600 text-xs">Icona</span>
                                         </div>
-                                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                            <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all border-gray-300"/>
-                                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
-                                        </div>
-                                    </div>
-                                    <div v-if="link.featured" class="pt-2 border-t border-gray-100 mt-2">
-                                        <label class="block text-xs font-bold text-gray-700 mb-1">📐 Grandezza Box in Evidenza (5 opzioni)</label>
-                                        <select v-model="link.featuredSize" @change="debouncedUpdatePreview" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black">
-                                            <option value="1">1 - Compatto (XS)</option>
-                                            <option value="2">2 - Ridotto (S)</option>
-                                            <option value="3">3 - Normale / Standard (M)</option>
-                                            <option value="4">4 - Grande (L)</option>
-                                            <option value="5">5 - Gigante / Quadrato (XL)</option>
+                                        <select v-model="link.iconChoice" @change="debouncedUpdatePreview" class="w-full p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none">
+                                            <option value="auto">Auto (Dalla piattaforma / URL)</option>
+                                            <option value="instagram">Instagram</option>
+                                            <option value="tiktok">TikTok</option>
+                                            <option value="youtube">YouTube</option>
+                                            <option value="spotify">Spotify</option>
+                                            <option value="x">X / Twitter</option>
+                                            <option value="facebook">Facebook</option>
+                                            <option value="linkedin">LinkedIn</option>
+                                            <option value="github">GitHub</option>
+                                            <option value="discord">Discord</option>
+                                            <option value="twitch">Twitch</option>
+                                            <option value="soundcloud">SoundCloud</option>
+                                            <option value="apple">Apple Music</option>
+                                            <option value="custom">Icona Personalizzata...</option>
                                         </select>
-                                    </div>
-                                    <div class="pt-2 border-t border-gray-100 mt-2">
-                                        <label class="block text-xs font-bold text-gray-600 mb-1">🎨 Iconcina Sotto Titolo (16x16 o 32x32)</label>
-                                        <div class="flex gap-2">
-                                            <input v-model="link.customIcon" @input="debouncedUpdatePreview" placeholder="URL o carica icona..." class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
-                                                <span>Carica Icona</span>
-                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => link.customIcon = url)">
+                                        <div v-if="link.iconChoice === 'custom'" class="flex gap-1 mt-2">
+                                            <input v-model="link.customIcon" @input="debouncedUpdatePreview" placeholder="URL icona..." class="flex-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs">
+                                            <label class="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded text-xs cursor-pointer shrink-0">
+                                                <span>Carica</span>
+                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => { link.customIcon = url; debouncedUpdatePreview(); })">
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="pt-2 flex items-center justify-between border-t border-gray-100 mt-2">
-                                        <span class="text-xs font-semibold text-gray-600">Sfondo Trasparente per questo link</span>
-                                        <label class="flex items-center gap-1 cursor-pointer">
-                                            <input type="checkbox" v-model="link.transparent" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-black focus:ring-black w-4 h-4">
-                                            <span class="text-xs font-bold text-purple-600">Trasparente</span>
-                                        </label>
-                                    </div>
-                                    <div v-if="!link.transparent" class="pt-2 border-t border-gray-100 mt-2 flex items-center justify-between">
-                                        <span class="text-xs font-semibold text-gray-600">Colore Sfondo Link (opzionale)</span>
-                                        <div class="flex items-center gap-1">
-                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" type="color" class="w-6 h-6 rounded border-0 cursor-pointer">
-                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" placeholder="Vuoto = tema" class="w-24 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-xs uppercase">
+
+                                    <!-- Featured Box Toggle & Size -->
+                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold text-gray-600 text-xs">⭐ In Evidenza</span>
+                                            <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-black focus:ring-black w-4 h-4 cursor-pointer">
+                                        </div>
+                                        <div v-if="link.featured" class="mt-1.5">
+                                            <select v-model="link.featuredSize" @change="debouncedUpdatePreview" class="w-full p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700">
+                                                <option value="1">1 - Compatto (Orizzontale)</option>
+                                                <option value="2">2 - Banner Medio</option>
+                                                <option value="3">3 - Standard (16:9)</option>
+                                                <option value="4">4 - Grande (4:3)</option>
+                                                <option value="5">5 - Quadrato (1:1)</option>
+                                            </select>
                                         </div>
                                     </div>
+
+                                    <!-- Link Background / Transparent Toggle -->
+                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold text-gray-600 text-xs">Sfondo Trasparente</span>
+                                            <input type="checkbox" v-model="link.transparent" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer">
+                                        </div>
+                                        <div v-if="!link.transparent" class="flex items-center gap-2 mt-1.5">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" type="color" class="w-6 h-6 rounded border-0 cursor-pointer">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" placeholder="Colore Sfondo" class="flex-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs uppercase">
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -270,14 +287,12 @@
 
                         <div v-else class="space-y-4" ref="socialsList">
                             <div v-for="(social, index) in socials" :key="social.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-3 transition-all relative group hover:border-gray-300">
-                                <!-- Move & Drag handle -->
                                 <div class="flex flex-col justify-center items-center gap-1 text-gray-400">
                                     <div class="drag-handle p-1.5 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-grab active:cursor-grabbing" title="Trascina per spostare">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                                     </div>
                                 </div>
 
-                                <!-- Social form -->
                                 <div class="flex-1 space-y-3 min-w-0">
                                     <div class="flex gap-3">
                                         <div class="w-1/3 min-w-[120px]">
@@ -298,28 +313,16 @@
                                                 <option value="soundcloud">SoundCloud</option>
                                                 <option value="apple">Apple Music</option>
                                                 <option value="amazon">Amazon Music</option>
-                                                <option value="custom">Personalizzato (Icona personalizzata)</option>
+                                                <option value="custom">Personalizzata...</option>
                                             </select>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <label class="block text-xs font-semibold text-gray-500 mb-1">URL Profilo</label>
-                                            <input v-model="social.url" @input="debouncedUpdatePreview" placeholder="https://..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <input v-model="social.url" @input="debouncedUpdatePreview" placeholder="https://..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-purple-500">
                                         </div>
-                                        <div class="flex items-end">
-                                            <button @click="removeSocial(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0" title="Elimina social">
-                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div v-if="social.platform === 'custom'" class="pt-2 border-t border-gray-100">
-                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Icona Personalizzata (16x16 o 32x32)</label>
-                                        <div class="flex gap-2">
-                                            <input v-model="social.icon" @input="debouncedUpdatePreview" placeholder="https://... o carica foto" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
-                                                <span>Carica Icona</span>
-                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => social.icon = url)">
-                                            </label>
-                                        </div>
+                                        <button @click="removeSocial(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0 self-end mb-0.5" title="Elimina social">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -329,132 +332,79 @@
 
                 <!-- APPEARANCE TAB -->
                 <div v-show="currentTab === 'appearance'" class="space-y-6">
-                    
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-6">Sfondo</h2>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 class="text-lg font-bold">Stile Sfondo</h2>
                         
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div @click="theme.bgType = 'solid'; debouncedUpdatePreview()" :class="theme.bgType !== 'gradient' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
-                                <div class="w-full h-16 rounded-lg bg-gray-200 mb-2"></div>
-                                <span class="text-sm font-semibold">Tinta Unita</span>
-                            </div>
-                            <div @click="theme.bgType = 'gradient'; debouncedUpdatePreview()" :class="theme.bgType === 'gradient' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
-                                <div class="w-full h-16 rounded-lg bg-gradient-to-b from-gray-300 to-gray-500 mb-2"></div>
-                                <span class="text-sm font-semibold">Sfumatura</span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Primario</label>
-                                <div class="flex items-center gap-3">
-                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
-                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
-                                </div>
-                            </div>
-                            <div v-if="theme.bgType === 'gradient'">
-                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Secondario</label>
-                                <div class="flex items-center gap-3 mb-4">
-                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
-                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
-                                </div>
-                                <label class="block text-sm font-medium text-gray-600 mb-1">Direzione Sfumatura</label>
-                                <select v-model="theme.gradientDirection" @change="debouncedUpdatePreview" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                                    <option value="to bottom">Dall'alto verso il basso (↓)</option>
-                                    <option value="to right">Da sinistra a destra (→)</option>
-                                    <option value="to left">Da destra a sinistra (←)</option>
-                                    <option value="to top">Dal basso verso l'alto (↑)</option>
-                                    <option value="radial">Dal centro all'esterno (Circolare / Radiale)</option>
-                                    <option value="135deg">Diagonale (in alto a sx → in basso a dx)</option>
-                                    <option value="225deg">Diagonale (in alto a dx → in basso a sx)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-6">Pulsanti</h2>
-                        
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                            <div @click="theme.btnRadius = '0px'; debouncedUpdatePreview()" :class="theme.btnRadius === '0px' || theme.btnRadius === '0' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <div class="w-16 h-8 bg-black mb-2"></div>
-                                <span class="text-xs font-semibold">Squadrati</span>
-                            </div>
-                            <div @click="theme.btnRadius = '8px'; debouncedUpdatePreview()" :class="theme.btnRadius === '8px' || theme.btnRadius === '8' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <div class="w-16 h-8 bg-black rounded-lg mb-2"></div>
-                                <span class="text-xs font-semibold">Smussati</span>
-                            </div>
-                            <div @click="theme.btnRadius = '50px'; debouncedUpdatePreview()" :class="theme.btnRadius === '50px' || theme.btnRadius === '24px' || theme.btnRadius === '24' || theme.btnRadius === '9999px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <div class="w-16 h-8 bg-black rounded-full mb-2"></div>
-                                <span class="text-xs font-semibold">Arrotondati</span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-1">Stile Pulsante</label>
-                                <select v-model="theme.btnBg" @change="debouncedUpdatePreview" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                                    <option value="transparent">Outline (Bordo sottile)</option>
-                                    <option value="#ffffff">Bianco Solido</option>
-                                    <option value="#000000">Nero Solido</option>
-                                    <option value="#ea73e6">Rosa Valore</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-1">Colore Testo Pulsante</label>
-                                <div class="flex items-center gap-3">
-                                    <input v-model="theme.btnText" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
-                                    <input v-model="theme.btnText" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-6">Testo</h2>
                         <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-1">Colore Testo Pagina</label>
-                            <div class="flex items-center gap-3">
-                                <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="color" class="w-10 h-10 rounded border-0 cursor-pointer">
-                                <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
+                            <label class="block text-xs font-semibold text-gray-600 mb-2">Tipo Sfondo</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button @click="theme.bgType = 'gradient'; debouncedUpdatePreview()" :class="theme.bgType === 'gradient' ? 'ring-2 ring-black bg-gray-50' : 'bg-white'" class="p-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 transition-all">Sfumatura (Gradient)</button>
+                                <button @click="theme.bgType = 'flat'; debouncedUpdatePreview()" :class="theme.bgType === 'flat' ? 'ring-2 ring-black bg-gray-50' : 'bg-white'" class="p-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 transition-all">Tinta Unita (Flat)</button>
+                            </div>
+                        </div>
+
+                        <div v-if="theme.bgType === 'gradient'" class="grid grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Iniziale (Superiore)</label>
+                                <div class="flex items-center gap-2">
+                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="color" class="w-9 h-9 rounded border-0 cursor-pointer">
+                                    <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="text" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs uppercase">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Finale (Inferiore)</label>
+                                <div class="flex items-center gap-2">
+                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="color" class="w-9 h-9 rounded border-0 cursor-pointer">
+                                    <input v-model="theme.bgColor2" @input="debouncedUpdatePreview" type="text" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs uppercase">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="pt-2">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Sfondo Semplice</label>
+                            <div class="flex items-center gap-2">
+                                <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="color" class="w-9 h-9 rounded border-0 cursor-pointer">
+                                <input v-model="theme.bgColor1" @input="debouncedUpdatePreview" type="text" class="w-36 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs uppercase">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-5">
+                            <h3 class="text-sm font-bold mb-3 text-gray-800">Effetto Aura / Bagliore</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Bagliore</label>
+                                    <div class="flex items-center gap-2">
+                                        <input v-model="theme.bgGlow" @input="debouncedUpdatePreview" type="color" class="w-8 h-8 rounded border-0 cursor-pointer">
+                                        <input v-model="theme.bgGlow" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs uppercase">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Testi Generale</label>
+                                    <div class="flex items-center gap-2">
+                                        <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="color" class="w-8 h-8 rounded border-0 cursor-pointer">
+                                        <input v-model="theme.fontColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs uppercase">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- STATISTICHE TAB -->
+                <!-- STATS TAB -->
                 <div v-show="currentTab === 'stats'" class="space-y-6">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-xl font-bold mb-6">Panoramica</h2>
+                        <h2 class="text-lg font-bold mb-2">Statistiche e Clic</h2>
+                        <p class="text-xs text-gray-500 mb-6">Visualizza i dati e l'interesse dei tuoi visitatori sui tuoi link.</p>
+                        
                         <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="p-6 bg-purple-50 rounded-2xl border border-purple-100 text-center">
-                                <p class="text-sm text-purple-600 font-semibold mb-1">Visite Totali</p>
-                                <p class="text-4xl font-black text-purple-900"><%= stats ? stats.totalVisits : 0 %></p>
+                            <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100 text-center">
+                                <span class="block text-2xl font-bold text-purple-700"><%= (data.analytics && data.analytics.totalVisits) || 0 %></span>
+                                <span class="text-xs font-semibold text-purple-600 uppercase tracking-wide">Visite Totali</span>
                             </div>
-                            <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
-                                <p class="text-sm text-blue-600 font-semibold mb-1">Click Totali</p>
-                                <p class="text-4xl font-black text-blue-900"><%= stats ? stats.totalClicks : 0 %></p>
+                            <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100 text-center">
+                                <span class="block text-2xl font-bold text-purple-700"><%= (data.analytics && data.analytics.totalClicks) || 0 %></span>
+                                <span class="text-xs font-semibold text-purple-600 uppercase tracking-wide">Clic Sui Link</span>
                             </div>
-                        </div>
-
-                        <h3 class="text-lg font-bold mb-4">Click sui Link (Top 10)</h3>
-                        <div class="space-y-3">
-                            <% if (!stats || stats.topLinks.length === 0) { %>
-                                <p class="text-gray-500 text-sm italic">Nessun click registrato ancora.</p>
-                            <% } else { %>
-                                <% stats.topLinks.forEach(link => { %>
-                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div class="truncate max-w-[75%]">
-                                        <p class="text-sm font-bold text-gray-800 truncate"><%= link.title || link.url %></p>
-                                        <p class="text-[11px] font-normal text-gray-400 truncate mt-0.5"><%= link.url %></p>
-                                    </div>
-                                    <span class="px-3 py-1 bg-black text-white text-xs font-bold rounded-full shrink-0 ml-2"><%= link.count %></span>
-                                </div>
-                                <% }) %>
-                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -462,8 +412,8 @@
                 <!-- SECTIONS TAB -->
                 <div v-show="currentTab === 'sections'" class="space-y-6">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-2">🧩 Ordine e Posizionamento Sezioni</h2>
-                        <p class="text-sm text-gray-500 mb-6">Trascina le sezioni verso l'alto o verso il basso (drag and drop) oppure usa le frecce per riordinarle nella tua pagina ufficiale.</p>
+                        <h2 class="text-lg font-bold mb-2">Ordine Sezioni</h2>
+                        <p class="text-sm text-gray-500 mb-6">Trascina le sezioni (drag and drop) o usa le frecce per stabilire l'ordine dei blocchi nella pagina.</p>
                         
                         <div class="space-y-3" ref="sectionsList">
                             <div v-for="(sec, index) in profile.sectionOrder" :key="sec" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between cursor-move shadow-sm hover:border-black transition-all">
@@ -472,10 +422,10 @@
                                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>
                                     </div>
                                     <span class="font-bold text-sm text-gray-800">
-                                        {{ sec === 'profile' ? '👤 Foto profilo, Nome e Bio' :
-                                           sec === 'socials' ? '🌐 Icone Social' :
-                                           sec === 'business_mail' ? '💼 Pulsante Business Email' :
-                                           sec === 'links' ? '🔗 Elenco dei Link e Box in evidenza' : sec }}
+                                        {{ sec === 'profile' ? 'Foto profilo, Nome e Bio' :
+                                           sec === 'socials' ? 'Icone Social' :
+                                           sec === 'business_mail' ? 'Pulsante Business Email' :
+                                           sec === 'links' ? 'Elenco dei Link e Box in evidenza' : sec }}
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-1">
@@ -487,6 +437,18 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Spaziatura tra le sezioni -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-2">Spaziatura tra le Sezioni</h2>
+                        <p class="text-sm text-gray-500 mb-4">Regola la distanza verticale (margine) tra i vari blocchi della tua pagina.</p>
+                        <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                            <input type="range" min="0" max="64" step="4" v-model.number="profile.sectionGap" @input="debouncedUpdatePreview" class="flex-1 accent-black cursor-pointer">
+                            <span class="text-sm font-mono font-bold px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-800 shrink-0">
+                                {{ profile.sectionGap !== undefined ? profile.sectionGap : 16 }} px
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -514,6 +476,17 @@
         if (!initialData.profile.sectionOrder || !Array.isArray(initialData.profile.sectionOrder) || initialData.profile.sectionOrder.length === 0) {
             initialData.profile.sectionOrder = ['profile', 'socials', 'business_mail', 'links'];
         }
+        if (initialData.profile.sectionGap === undefined) {
+            initialData.profile.sectionGap = 16;
+        }
+
+        // Initialize iconChoice for links if missing
+        if (initialData.links && Array.isArray(initialData.links)) {
+            initialData.links.forEach(l => {
+                if (!l.iconChoice) l.iconChoice = l.customIcon ? 'custom' : 'auto';
+            });
+        }
+
         createApp({
             data() {
                 return {
@@ -640,22 +613,6 @@
                         this.debouncedUpdatePreview();
                     }
                 },
-                moveUpSocial(index) {
-                    if (index > 0) {
-                        const temp = this.socials[index];
-                        this.socials[index] = this.socials[index - 1];
-                        this.socials[index - 1] = temp;
-                        this.debouncedUpdatePreview();
-                    }
-                },
-                moveDownSocial(index) {
-                    if (index < this.socials.length - 1) {
-                        const temp = this.socials[index];
-                        this.socials[index] = this.socials[index + 1];
-                        this.socials[index + 1] = temp;
-                        this.debouncedUpdatePreview();
-                    }
-                },
                 addLink() {
                     this.links.unshift({
                         id: Date.now().toString(),
@@ -663,13 +620,23 @@
                         url: 'https://',
                         subtitle: '',
                         featured: false,
-                        thumbnail: ''
+                        featuredSize: '3',
+                        iconChoice: 'auto',
+                        customIcon: '',
+                        thumbnail: '',
+                        transparent: false,
+                        bgColor: ''
                     });
                     this.debouncedUpdatePreview();
                 },
+                removeLink(index) {
+                    if(confirm('Sei sicuro di voler eliminare questo link?')) {
+                        this.links.splice(index, 1);
+                        this.debouncedUpdatePreview();
+                    }
+                },
                 async fetchLinkMeta(link) {
                     if (!link.url || link.url === 'https://') return alert("Inserisci prima un URL valido.");
-                    // 1. Try regex parsing locally first
                     let detected = null;
                     const url = link.url.trim();
                     const igMatch = url.match(/instagram\.com\/([^/?#]+)/i);
@@ -678,8 +645,6 @@
                     if (!detected && tkMatch && tkMatch[1] && !['video', 'foryou', 'explore', 'live'].includes(tkMatch[1].toLowerCase())) detected = '@' + tkMatch[1].replace(/^@/, '');
                     const ytMatch = url.match(/youtube\.com\/@([^/?#]+)/i);
                     if (!detected && ytMatch && ytMatch[1]) detected = '@' + ytMatch[1];
-                    const xMatch = url.match(/(?:twitter|x)\.com\/([^/?#]+)/i);
-                    if (!detected && xMatch && xMatch[1] && !['home', 'explore', 'search', 'messages', 'notifications'].includes(xMatch[1].toLowerCase())) detected = '@' + xMatch[1];
                     
                     if (detected) {
                         link.subtitle = detected;
@@ -687,97 +652,74 @@
                         return;
                     }
                     
-                    // 2. If not detected via regex, call backend API
                     try {
-                        const res = await fetch('/admin/fetch-url-meta', {
+                        const res = await fetch('/admin/fetch-link-meta', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: link.url })
                         });
                         const data = await res.json();
-                        if (data && data.username) {
-                            link.subtitle = data.username;
-                        } else if (data && data.title) {
-                            link.subtitle = data.title;
+                        if (data.success) {
+                            if (data.title && (!link.title || link.title === 'Nuovo Link')) link.title = data.title;
+                            if (data.subtitle && !link.subtitle) link.subtitle = data.subtitle;
+                            if (data.image && !link.thumbnail) link.thumbnail = data.image;
+                            this.debouncedUpdatePreview();
                         } else {
-                            link.subtitle = this.profile.name || "Valore";
+                            alert("Non è stato possibile estrarre dati automatici da questo URL.");
                         }
-                        this.debouncedUpdatePreview();
-                    } catch (err) {
-                        console.error("Errore nel recupero dati:", err);
-                        alert("Impossibile recuperare il nome utente in automatico. Puoi scriverlo manualmente.");
-                    }
-                },
-                removeLink(index) {
-                    if(confirm('Sei sicuro di voler eliminare questo link?')) {
-                        this.links.splice(index, 1);
-                        this.debouncedUpdatePreview();
-                    }
-                },
-                moveUp(index) {
-                    if (index > 0) {
-                        const temp = this.links[index];
-                        this.links[index] = this.links[index - 1];
-                        this.links[index - 1] = temp;
-                        this.debouncedUpdatePreview();
-                    }
-                },
-                moveDown(index) {
-                    if (index < this.links.length - 1) {
-                        const temp = this.links[index];
-                        this.links[index] = this.links[index + 1];
-                        this.links[index + 1] = temp;
-                        this.debouncedUpdatePreview();
+                    } catch (e) {
+                        alert("Errore durante il recupero dei dati.");
                     }
                 },
                 debouncedUpdatePreview() {
                     clearTimeout(this.previewTimeout);
                     this.previewTimeout = setTimeout(() => {
                         this.updatePreview();
-                    }, 500); // Wait 500ms after last typing before updating
+                    }, 250);
                 },
                 async updatePreview() {
                     try {
-                        const res = await fetch('/admin/preview', {
+                        await fetch('/admin/preview', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 profile: this.profile,
-                                theme: this.theme,
                                 links: this.links,
-                                socials: this.socials
+                                socials: this.socials,
+                                theme: this.theme
                             })
                         });
-                        if (res.ok) {
-                            const iframe = document.getElementById('preview-frame');
-                            iframe.contentWindow.location.reload();
-                        }
-                    } catch (e) {
-                        console.error('Preview update failed', e);
+                        const iframe = document.getElementById('preview-frame');
+                        if (iframe) iframe.src = '/preview?t=' + Date.now();
+                    } catch(e) {
+                        console.error('Errore update preview:', e);
                     }
                 },
                 async save() {
                     this.saving = true;
                     try {
-                        const res = await fetch('/admin/update', {
+                        const res = await fetch('/admin/save', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 profile: this.profile,
-                                theme: this.theme,
                                 links: this.links,
-                                socials: this.socials
+                                socials: this.socials,
+                                theme: this.theme
                             })
                         });
-                        if (res.ok) {
+                        const data = await res.json();
+                        if (data.success) {
                             alert('Modifiche pubblicate con successo!');
+                            this.updatePreview();
                         } else {
-                            alert('Errore nel salvataggio');
+                            alert('Errore durante il salvataggio: ' + data.error);
                         }
-                    } catch (e) {
-                        alert('Errore di connessione');
+                    } catch(e) {
+                        alert('Errore di connessione durante il salvataggio.');
+                    } finally {
+                        this.saving = false;
                     }
-                    this.saving = false;
                 }
             }
         }).mount('#app');
