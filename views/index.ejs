@@ -152,7 +152,7 @@
 %>
 <div data-section="profile" class="relative pt-6 sm:pt-8 w-full flex flex-col items-center">
   <div class="mb-4 mt-2" id="profile-picture" data-sticker-anchor="avatar" aria-label="Profile avatar">
-    <img class="rounded-full object-cover shadow-lg border border-white/20" style="width:104px;height:104px;object-fit:cover;" data-testid="ProfileImage" crossorigin="anonymous" src="<%= profile.image %>" alt="Valore Official">
+    <img class="rounded-2xl object-cover shadow-lg border border-white/20" style="width:104px;height:104px;object-fit:cover;" data-testid="ProfileImage" crossorigin="anonymous" src="<%= profile.image %>" alt="Valore Official">
   </div>
   <div id="profile-title" aria-label="Profile title" class="relative mx-6 max-w-full">
     <div class="text-center">
@@ -269,9 +269,6 @@
   } else if (activePlatform === 'github') {
     platformLabel = 'GitHub';
     iconSvg = '<path fill="currentColor" d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2Z"></path>';
-  } else if (activePlatform === 'discord') {
-    platformLabel = 'Discord';
-    iconSvg = '<path fill="currentColor" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"></path>';
   } else if (activePlatform === 'twitch') {
     platformLabel = 'Twitch';
     iconSvg = '<path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"></path>';
@@ -285,88 +282,49 @@
 %>
   <div data-testid="Link">
   <% if(link.featured) { %>
-    <%
-      let isCompactFeatured = (link.featuredSize == '1');
-      let aspectClass = 'aspect-video';
-      if (link.featuredSize == '2') aspectClass = 'aspect-[2.5/1]';
-      else if (link.featuredSize == '3') aspectClass = 'aspect-video';
-      else if (link.featuredSize == '4') aspectClass = 'aspect-[4/3]';
-      else if (link.featuredSize == '5') aspectClass = 'aspect-square';
-    %>
-    <% if (isCompactFeatured) { %>
-      <!-- Option 1: Compatto / Orizzontale (Leggermente più grande del link normale) -->
-      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" class="group" tabindex="0" style="opacity:1;">
-        <div data-testid="NewLinkContainerInner" class="grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
-          <a target="_blank" rel="noopener noreferrer" href="<%= link.url %>" class="flex items-center p-3.5 gap-3.5 focus:outline-none relative w-full min-h-[76px]" data-testid="LinkClickTriggerButton">
-            <% if (link.thumbnail) { %>
-              <img loading="lazy" src="<%= link.thumbnail %>" alt="<%= link.title %>" class="w-16 h-16 rounded-xl object-cover shrink-0 shadow-md border border-white/20">
-            <% } %>
-            <div class="flex-1 min-w-0 flex flex-col justify-center">
-              <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-[15px] font-bold leading-tight text-[var(--button-style-text)] line-clamp-1"><%= link.title %></div>
-              <div class="flex items-center text-xs pb-[2px] text-[var(--button-style-text)] opacity-70 gap-1.5 mt-1">
-                <div class="flex shrink-0 items-center">
-                  <% if (iconChoice === 'custom' && link.customIcon) { %>
-                    <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
-                  <% } else { %>
-                    <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
-                  <% } %>
-                </div>
-                <span class="shrink-0">·</span>
-                <span class="min-w-0 flex-1 overflow-hidden line-clamp-1 text-left"><%= profileName %></span>
-              </div>
+    <!-- Featured Link Card (ALWAYS Square image frame, fully visible image, NEVER round) -->
+    <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" class="group" tabindex="0" style="opacity:1;">
+      <div data-testid="NewLinkContainerInner" class="grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
+        <a target="_blank" rel="noopener noreferrer" href="<%= link.url %>" class="block w-full focus:outline-none p-3" data-testid="LinkClickTriggerButton">
+          <% if (link.thumbnail) { %>
+            <div class="relative w-full aspect-square max-w-[260px] mx-auto overflow-hidden rounded-2xl border border-white/20 bg-black/20 flex items-center justify-center p-1">
+              <img data-testid="link-head-featured-thumbnail-image" loading="lazy" src="<%= link.thumbnail %>" alt="<%= link.title %>" class="h-full w-full object-contain rounded-xl">
             </div>
-            <div class="flex h-7 w-7 items-center justify-center rounded-xl text-[var(--button-style-text)] opacity-60 transition hover:bg-black/10 hover:opacity-100 shrink-0">
+          <% } %>
+        </a>
+        <div class="transition-opacity duration-200 opacity-100 flex h-full w-full justify-center">
+          <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-14 w-full flex-col justify-center gap-[1px] py-2 tracking-[-0.2px] items-center px-8">
+            <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none h-full grid-rows-1 absolute inset-0 z-10 !grid-rows-none" data-testid="LinkClickTriggerButton"><span class="sr-only"><%= link.title %></span></a>
+            <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-balance text-[15px] font-bold leading-[1.2] text-[var(--button-style-text)] line-clamp-2 text-center text-[var(--button-style-text)]"><%= link.title %></div>
+            <div class="flex items-center text-xs justify-start pb-[2px] text-[var(--button-style-text)] opacity-70 gap-1 mt-0.5">
+              <div class="flex shrink-0 items-center">
+                <% if (iconChoice === 'custom' && link.customIcon) { %>
+                  <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
+                <% } else { %>
+                  <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
+                <% } %>
+              </div>
+              <span class="shrink-0">·</span>
+              <span class="min-w-0 flex-1 overflow-hidden line-clamp-1 text-left"><%= profileName %></span>
+            </div>
+            <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="flex h-6 w-6 items-center justify-center rounded-xl text-[var(--button-style-text)] opacity-50 transition hover:bg-black/10 hover:opacity-100 absolute right-3 top-1/2 z-20 -translate-y-1/2" data-testid="NewLinkShareButton">
               <svg width="3" height="11" viewBox="0 0 3 11" fill="none"><path class="fill-[currentColor]" d="M1.33333 10.6667C0.966667 10.6667 0.652778 10.5361 0.391667 10.275C0.130556 10.0139 0 9.7 0 9.33333C0 8.96667 0.130556 8.65278 0.391667 8.39167C0.652778 8.13056 0.966667 8 1.33333 8C1.7 8 2.01389 8.13056 2.275 8.39167C2.53611 8.65278 2.66667 8.96667 2.66667 9.33333C2.66667 9.7 2.53611 10.0139 2.275 10.275C2.01389 10.5361 1.7 10.6667 1.33333 10.6667ZM1.33333 6.66667C0.966667 6.66667 0.652778 6.53611 0.391667 6.275C0.130556 6.01389 0 5.7 0 5.33333C0 4.96667 0.130556 4.65278 0.391667 4.39167C0.652778 4.13056 0.966667 4 1.33333 4C1.7 4 2.01389 4.13056 2.275 4.39167C2.53611 4.65278 2.66667 4.96667 2.66667 5.33333C2.66667 5.7 2.53611 6.01389 2.275 6.275C2.01389 6.53611 1.7 6.66667 1.33333 6.66667ZM1.33333 2.66667C0.966667 2.66667 0.652778 2.53611 0.391667 2.275C0.130556 2.01389 0 1.7 0 1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0C1.7 0 2.01389 0.130556 2.275 0.391667C2.53611 0.652778 2.66667 0.966667 2.66667 1.33333C2.66667 1.7 2.53611 2.01389 2.275 2.275C2.01389 2.53611 1.7 2.66667 1.33333 2.66667Z"></path></svg>
-            </div>
-          </a>
-        </div>
-      </div>
-    <% } else { %>
-      <!-- Options 2 to 5: Banner Featured Card -->
-      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" data-style-type="OUTLINE" data-layout="featured" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
-        <div data-testid="NewLinkContainerInner" class="LinkContainer_LinkContainer__Kk5IQ grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
-          <div class="invisible absolute top-[calc(var(--link-gap)*-1)] block" id="<%= link.id %>"></div>
-          <a target="_blank" rel="noopener noreferrer" href="<%= link.url %>" class="grid w-full grid-cols-1 focus:outline-none grid-rows-[min-content_1fr]" data-testid="LinkClickTriggerButton">
-            <% if (link.thumbnail) { %>
-              <div class="relative w-full max-w-full overflow-hidden <%= aspectClass %>" style="<%= link.transparent ? 'background: transparent !important;' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
-                <img data-testid="link-head-featured-thumbnail-image" loading="lazy" src="<%= link.thumbnail %>" alt="<%= link.title %>" class="z-0 h-full w-full object-cover">
-              </div>
-            <% } %>
-          </a>
-          <div class="transition-opacity duration-200 opacity-100 flex h-full w-full justify-center">
-            <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center px-8">
-              <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none h-full grid-rows-1 absolute inset-0 z-10 !grid-rows-none" data-testid="LinkClickTriggerButton"><span class="sr-only"><%= link.title %></span></a>
-              <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-2 text-center text-[var(--button-style-text)]"><%= link.title %></div>
-              <div class="flex items-center text-xs justify-start pb-[2px] text-[var(--button-style-text)] opacity-60 gap-1">
-                <div class="flex shrink-0 items-center">
-                  <% if (iconChoice === 'custom' && link.customIcon) { %>
-                    <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
-                  <% } else { %>
-                    <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
-                  <% } %>
-                </div>
-                <span class="shrink-0">·</span>
-                <span class="min-w-0 flex-1 overflow-hidden line-clamp-1 text-left"><%= profileName %></span>
-              </div>
-              <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="flex h-6 w-6 items-center justify-center rounded-xl text-[var(--button-style-text)] opacity-50 transition hover:bg-black/10 hover:opacity-100 absolute right-3 top-1/2 z-20 -translate-y-1/2" data-testid="NewLinkShareButton">
-                <svg width="3" height="11" viewBox="0 0 3 11" fill="none" xmlns="http://www.w3.org/2000/svg"><title><%= link.title %></title><path class="fill-[currentColor]" d="M1.33333 10.6667C0.966667 10.6667 0.652778 10.5361 0.391667 10.275C0.130556 10.0139 0 9.7 0 9.33333C0 8.96667 0.130556 8.65278 0.391667 8.39167C0.652778 8.13056 0.966667 8 1.33333 8C1.7 8 2.01389 8.13056 2.275 8.39167C2.53611 8.65278 2.66667 8.96667 2.66667 9.33333C2.66667 9.7 2.53611 10.0139 2.275 10.275C2.01389 10.5361 1.7 10.6667 1.33333 10.6667ZM1.33333 6.66667C0.966667 6.66667 0.652778 6.53611 0.391667 6.275C0.130556 6.01389 0 5.7 0 5.33333C0 4.96667 0.130556 4.65278 0.391667 4.39167C0.652778 4.13056 0.966667 4 1.33333 4C1.7 4 2.01389 4.13056 2.275 4.39167C2.53611 4.65278 2.66667 4.96667 2.66667 5.33333C2.66667 5.7 2.53611 6.01389 2.275 6.275C2.01389 6.53611 1.7 6.66667 1.33333 6.66667ZM1.33333 2.66667C0.966667 2.66667 0.652778 2.53611 0.391667 2.275C0.130556 2.01389 0 1.7 0 1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0C1.7 0 2.01389 0.130556 2.275 0.391667C2.53611 0.652778 2.66667 0.966667 2.66667 1.33333C2.66667 1.7 2.53611 2.01389 2.275 2.275C2.01389 2.53611 1.7 2.66667 1.33333 2.66667Z"></path></svg>
-              </a>
-            </div>
+            </a>
           </div>
         </div>
       </div>
-    <% } %>
+    </div>
   <% } else { %>
-    <!-- Standard Link (Not Featured) -->
-    <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="false" data-style-type="OUTLINE" data-layout="stack" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
+    <!-- Standard Link (Not Featured - ALWAYS Square image, fully visible) -->
+    <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="false" class="group" tabindex="0" style="opacity:1;">
       <div data-testid="NewLinkContainerInner" class="LinkContainer_LinkContainer__Kk5IQ grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
         <div class="invisible absolute top-[calc(var(--link-gap)*-1)] block" id="<%= link.id %>"></div>
         <a data-title="<%= link.title %>" href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none grid-rows-[min-content_1fr]" data-testid="LinkClickTriggerButton">
           <div class="transition-opacity duration-200 opacity-100" style="opacity: 1;">
             <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center <%= link.thumbnail ? 'px-16' : 'px-8' %>">
               <% if (link.thumbnail) { %>
-                <div class="absolute bottom-2 left-2 top-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-[var(--button-style-inner-radius)] text-[var(--button-style-text)]">
-                  <img loading="eager" src="<%= link.thumbnail %>" alt="" class="h-full w-full object-cover">
+                <div class="absolute bottom-2 left-2 top-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-white/20 text-[var(--button-style-text)] bg-black/10">
+                  <img loading="eager" src="<%= link.thumbnail %>" alt="" class="h-full w-full object-contain rounded-lg">
                 </div>
               <% } %>
               <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-1 text-center text-[var(--button-style-text)]"><%= link.title %></div>
@@ -385,14 +343,14 @@
           </div>
         </a>
         <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="flex h-6 w-6 items-center justify-center rounded-xl text-[var(--button-style-text)] opacity-50 transition hover:bg-black/10 hover:opacity-100 absolute right-3 LinkContainer_actionButton__l3va6 top-1/2 -translate-y-1/2" data-testid="NewLinkShareButton">
-          <svg width="3" height="11" viewBox="0 0 3 11" fill="none" xmlns="http://www.w3.org/2000/svg"><title><%= link.title %></title><path class="fill-[currentColor]" d="M1.33333 10.6667C0.966667 10.6667 0.652778 10.5361 0.391667 10.275C0.130556 10.0139 0 9.7 0 9.33333C0 8.96667 0.130556 8.65278 0.391667 8.39167C0.652778 8.13056 0.966667 8 1.33333 8C1.7 8 2.01389 8.13056 2.275 8.39167C2.53611 8.65278 2.66667 8.96667 2.66667 9.33333C2.66667 9.7 2.53611 10.0139 2.275 10.275C2.01389 10.5361 1.7 10.6667 1.33333 10.6667ZM1.33333 6.66667C0.966667 6.66667 0.652778 6.53611 0.391667 6.275C0.130556 6.01389 0 5.7 0 5.33333C0 4.96667 0.130556 4.65278 0.391667 4.39167C0.652778 4.13056 0.966667 4 1.33333 4C1.7 4 2.01389 4.13056 2.275 4.39167C2.53611 4.65278 2.66667 4.96667 2.66667 5.33333C2.66667 5.7 2.53611 6.01389 2.275 6.275C2.01389 6.53611 1.7 6.66667 1.33333 6.66667ZM1.33333 2.66667C0.966667 2.66667 0.652778 2.53611 0.391667 2.275C0.130556 2.01389 0 1.7 0 1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0C1.7 0 2.01389 0.130556 2.275 0.391667C2.53611 0.652778 2.66667 0.966667 2.66667 1.33333C2.66667 1.7 2.53611 2.01389 2.275 2.275C2.01389 2.53611 1.7 2.66667 1.33333 2.66667Z"></path></svg>
+          <svg width="3" height="11" viewBox="0 0 3 11" fill="none"><path class="fill-[currentColor]" d="M1.33333 10.6667C0.966667 10.6667 0.652778 10.5361 0.391667 10.275C0.130556 10.0139 0 9.7 0 9.33333C0 8.96667 0.130556 8.65278 0.391667 8.39167C0.652778 8.13056 0.966667 8 1.33333 8C1.7 8 2.01389 8.13056 2.275 8.39167C2.53611 8.65278 2.66667 8.96667 2.66667 9.33333C2.66667 9.7 2.53611 10.0139 2.275 10.275C2.01389 10.5361 1.7 10.6667 1.33333 10.6667ZM1.33333 6.66667C0.966667 6.66667 0.652778 6.53611 0.391667 6.275C0.130556 6.01389 0 5.7 0 5.33333C0 4.96667 0.130556 4.65278 0.391667 4.39167C0.652778 4.13056 0.966667 4 1.33333 4C1.7 4 2.01389 4.13056 2.275 4.39167C2.53611 4.65278 2.66667 4.96667 2.66667 5.33333C2.66667 5.7 2.53611 6.01389 2.275 6.275C2.01389 6.53611 1.7 6.66667 1.33333 6.66667ZM1.33333 2.66667C0.966667 2.66667 0.652778 2.53611 0.391667 2.275C0.130556 2.01389 0 1.7 0 1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0C1.7 0 2.01389 0.130556 2.275 0.391667C2.53611 0.652778 2.66667 0.966667 2.66667 1.33333C2.66667 1.7 2.53611 2.01389 2.275 2.275C2.01389 2.53611 1.7 2.66667 1.33333 2.66667Z"></path></svg>
         </a>
       </div>
     </div>
-  <% } %>
   </div>
-<% }) %>
-<%  }
+</div>
+  <% } %>
+<% }) %><%  }
   });
 %>
 </div></div></div></div></div></div></div>
