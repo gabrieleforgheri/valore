@@ -411,6 +411,71 @@
 
                 <!-- SECTIONS TAB -->
                 <div v-show="currentTab === 'sections'" class="space-y-6">
+                    <!-- Spaziature & Margini Pagina -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <div>
+                            <h2 class="text-lg font-bold">Spaziature & Margini Pagina</h2>
+                            <p class="text-xs text-gray-400 mt-0.5">Personalizza la distanza tra i link, tra i blocchi e i margini della pagina (in pixel)</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Distanza tra i Link -->
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-gray-700">Distanza tra i Link</label>
+                                    <span class="text-xs font-mono font-bold bg-white px-2 py-0.5 rounded border border-gray-200">{{ profile.linkGap || 14 }} px</span>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <select v-model="linkGapPreset" @change="onLinkGapPresetChange" class="flex-1 p-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none">
+                                        <option value="8">Compatta (8px)</option>
+                                        <option value="12">Normale (12px)</option>
+                                        <option value="16">Spaziata (16px)</option>
+                                        <option value="24">Ampia (24px)</option>
+                                        <option value="custom">Personalizzata...</option>
+                                    </select>
+                                    <input type="number" min="0" max="64" v-model.number="profile.linkGap" @input="debouncedUpdatePreview" class="w-16 p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-center">
+                                </div>
+                            </div>
+
+                            <!-- Distanza tra Sezioni -->
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-gray-700">Distanza tra le Sezioni</label>
+                                    <span class="text-xs font-mono font-bold bg-white px-2 py-0.5 rounded border border-gray-200">{{ profile.sectionGap || 16 }} px</span>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="range" min="0" max="64" step="2" v-model.number="profile.sectionGap" @input="debouncedUpdatePreview" class="flex-1 accent-black cursor-pointer">
+                                    <input type="number" min="0" max="100" v-model.number="profile.sectionGap" @input="debouncedUpdatePreview" class="w-16 p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-center">
+                                </div>
+                            </div>
+
+                            <!-- Margine dall'Alto (Top) -->
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-gray-700">Distanza dall'Alto (Top)</label>
+                                    <span class="text-xs font-mono font-bold bg-white px-2 py-0.5 rounded border border-gray-200">{{ profile.paddingTop || 24 }} px</span>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="range" min="0" max="120" step="4" v-model.number="profile.paddingTop" @input="debouncedUpdatePreview" class="flex-1 accent-black cursor-pointer">
+                                    <input type="number" min="0" max="200" v-model.number="profile.paddingTop" @input="debouncedUpdatePreview" class="w-16 p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-center">
+                                </div>
+                            </div>
+
+                            <!-- Margine dal Basso (Bottom) -->
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-gray-700">Distanza dal Basso (Bottom)</label>
+                                    <span class="text-xs font-mono font-bold bg-white px-2 py-0.5 rounded border border-gray-200">{{ profile.paddingBottom || 32 }} px</span>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="range" min="0" max="120" step="4" v-model.number="profile.paddingBottom" @input="debouncedUpdatePreview" class="flex-1 accent-black cursor-pointer">
+                                    <input type="number" min="0" max="200" v-model.number="profile.paddingBottom" @input="debouncedUpdatePreview" class="w-16 p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-center">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ordine Sezioni Drag & Drop -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold mb-2">Ordine Sezioni</h2>
                         <p class="text-sm text-gray-500 mb-6">Trascina le sezioni (drag and drop) o usa le frecce per stabilire l'ordine dei blocchi nella pagina.</p>
@@ -439,18 +504,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Spaziatura tra le sezioni -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-2">Spaziatura tra le Sezioni</h2>
-                        <p class="text-sm text-gray-500 mb-4">Regola la distanza verticale (margine) tra i vari blocchi della tua pagina.</p>
-                        <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                            <input type="range" min="0" max="64" step="4" v-model.number="profile.sectionGap" @input="debouncedUpdatePreview" class="flex-1 accent-black cursor-pointer">
-                            <span class="text-sm font-mono font-bold px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-800 shrink-0">
-                                {{ profile.sectionGap !== undefined ? profile.sectionGap : 16 }} px
-                            </span>
-                        </div>
-                    </div>
                 </div>
 
             </div>
@@ -476,11 +529,11 @@
         if (!initialData.profile.sectionOrder || !Array.isArray(initialData.profile.sectionOrder) || initialData.profile.sectionOrder.length === 0) {
             initialData.profile.sectionOrder = ['profile', 'socials', 'business_mail', 'links'];
         }
-        if (initialData.profile.sectionGap === undefined) {
-            initialData.profile.sectionGap = 16;
-        }
+        if (initialData.profile.sectionGap === undefined) initialData.profile.sectionGap = 16;
+        if (initialData.profile.linkGap === undefined) initialData.profile.linkGap = 14;
+        if (initialData.profile.paddingTop === undefined) initialData.profile.paddingTop = 24;
+        if (initialData.profile.paddingBottom === undefined) initialData.profile.paddingBottom = 32;
 
-        // Initialize iconChoice for links if missing
         if (initialData.links && Array.isArray(initialData.links)) {
             initialData.links.forEach(l => {
                 if (!l.iconChoice) l.iconChoice = l.customIcon ? 'custom' : 'auto';
@@ -489,6 +542,7 @@
 
         createApp({
             data() {
+                const initialLinkGap = initialData.profile.linkGap !== undefined ? initialData.profile.linkGap : 14;
                 return {
                     currentTab: 'links',
                     showMobilePreview: false,
@@ -500,7 +554,8 @@
                     links: initialData.links,
                     socials: initialData.socials || [],
                     saving: false,
-                    previewTimeout: null
+                    previewTimeout: null,
+                    linkGapPreset: [8, 12, 16, 24].includes(initialLinkGap) ? String(initialLinkGap) : 'custom'
                 }
             },
             mounted() {
@@ -541,6 +596,12 @@
                 });
             },
             methods: {
+                onLinkGapPresetChange() {
+                    if (this.linkGapPreset !== 'custom') {
+                        this.profile.linkGap = parseInt(this.linkGapPreset, 10);
+                        this.debouncedUpdatePreview();
+                    }
+                },
                 initSectionsSortable() {
                     this.$nextTick(() => {
                         if (this.$refs.sectionsList && !this._sectionsSortableInitialized) {
