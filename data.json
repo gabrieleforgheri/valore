@@ -2,7 +2,15 @@
   "profile": {
     "name": "Valore",
     "description": "",
-    "image": "images/30254ecc-d606-4323-a460-46d8c30f0062_FotoProfiloFinale.png"
+    "image": "images/30254ecc-d606-4323-a460-46d8c30f0062_FotoProfiloFinale.png",
+    "avatarShape": "modern",
+    "avatarSize": "normal",
+    "avatarBorderWidth": "1px",
+    "avatarBorderColor": "rgba(255,255,255,0.2)",
+    "showProfile": true,
+    "showSocials": true,
+    "showBusinessMail": true,
+    "showLinks": true
   },
   "links": [
     {
@@ -42,9 +50,21 @@
     }
   ],
   "socials": [
-    { "id": "1", "platform": "youtube", "url": "https://www.youtube.com/@rarestValore" },
-    { "id": "2", "platform": "tiktok", "url": "https://tiktok.com/@rarestvalore" },
-    { "id": "3", "platform": "spotify", "url": "https://open.spotify.com/intl-it/artist/3vO9rAZ7FTlGRwMKXtAerh?si=7Fsg43CTSrmze-xSQ5jTag" }
+    {
+      "id": "1",
+      "platform": "youtube",
+      "url": "https://www.youtube.com/@rarestValore"
+    },
+    {
+      "id": "2",
+      "platform": "tiktok",
+      "url": "https://tiktok.com/@rarestvalore"
+    },
+    {
+      "id": "3",
+      "platform": "spotify",
+      "url": "https://open.spotify.com/intl-it/artist/3vO9rAZ7FTlGRwMKXtAerh?si=7Fsg43CTSrmze-xSQ5jTag"
+    }
   ],
   "theme": {
     "bgType": "gradient",
@@ -57,6 +77,14 @@
     "btnBg": "transparent",
     "btnText": "#fce7ff",
     "btnRadius": "0",
-    "fontFamily": "IBM Plex Sans"
+    "fontFamily": "IBM Plex Sans",
+    "btnBorderWidth": "1px",
+    "btnBorderColor": "rgba(255,255,255,0.3)",
+    "btnShadow": "layered",
+    "btnBlur": "8px"
+  },
+  "seo": {
+    "metaTitle": "Valore Official: TikTok, Instagram | Linktree",
+    "metaDescription": "Scopri i link ufficiali di Valore: brani, video e social in un unico posto."
   }
 }

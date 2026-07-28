@@ -268,6 +268,13 @@ app.get('/admin/api/analytics', (req, res) => {
     res.json({ success: true, startDate, endDate, dailyClicks, detailedClicks });
 });
 
+app.post('/admin/save', (req, res) => {
+    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
+    saveData(req.body);
+    req.session.draft = null;
+    res.json({ success: true });
+});
+
 app.post('/admin/update', (req, res) => {
     if (!req.session.loggedIn) return res.redirect('/admin');
     saveData(req.body);
