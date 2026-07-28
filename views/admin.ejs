@@ -149,6 +149,15 @@
                                         <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL (es. https://...)" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-gray-400 rounded-none text-sm text-gray-600 focus:outline-none transition-colors">
                                     </div>
                                     <div class="pt-1">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Nome Profilo / Sottotitolo (es. @rarestvalore)</label>
+                                        <div class="flex gap-2">
+                                            <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="Lascia vuoto per rilevamento automatico dal social/link" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg text-xs transition-colors shrink-0 flex items-center gap-1" title="Rileva nome utente in automatico">
+                                                <span>✨ Auto-rileva</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="pt-1">
                                         <label class="block text-[11px] font-bold text-gray-500 mb-1">Immagine / Miniatura Link</label>
                                         <div class="flex gap-2">
                                             <input v-model="link.thumbnail" @input="debouncedUpdatePreview" placeholder="URL Immagine o carica foto" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
@@ -523,10 +532,52 @@
                         id: Date.now().toString(),
                         title: 'Nuovo Link',
                         url: 'https://',
+                        subtitle: '',
                         featured: false,
                         thumbnail: ''
                     });
                     this.debouncedUpdatePreview();
+                },
+                async fetchLinkMeta(link) {
+                    if (!link.url || link.url === 'https://') return alert("Inserisci prima un URL valido.");
+                    // 1. Try regex parsing locally first
+                    let detected = null;
+                    const url = link.url.trim();
+                    const igMatch = url.match(/instagram\.com\/([^/?#]+)/i);
+                    if (igMatch && igMatch[1] && !['www', 'p', 'reel', 'reels', 'explore', 'stories'].includes(igMatch[1].toLowerCase())) detected = '@' + igMatch[1];
+                    const tkMatch = url.match(/tiktok\.com\/@?([^/?#]+)/i);
+                    if (!detected && tkMatch && tkMatch[1] && !['video', 'foryou', 'explore', 'live'].includes(tkMatch[1].toLowerCase())) detected = '@' + tkMatch[1].replace(/^@/, '');
+                    const ytMatch = url.match(/youtube\.com\/@([^/?#]+)/i);
+                    if (!detected && ytMatch && ytMatch[1]) detected = '@' + ytMatch[1];
+                    const xMatch = url.match(/(?:twitter|x)\.com\/([^/?#]+)/i);
+                    if (!detected && xMatch && xMatch[1] && !['home', 'explore', 'search', 'messages', 'notifications'].includes(xMatch[1].toLowerCase())) detected = '@' + xMatch[1];
+                    
+                    if (detected) {
+                        link.subtitle = detected;
+                        this.debouncedUpdatePreview();
+                        return;
+                    }
+                    
+                    // 2. If not detected via regex, call backend API
+                    try {
+                        const res = await fetch('/admin/fetch-url-meta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: link.url })
+                        });
+                        const data = await res.json();
+                        if (data && data.username) {
+                            link.subtitle = data.username;
+                        } else if (data && data.title) {
+                            link.subtitle = data.title;
+                        } else {
+                            link.subtitle = this.profile.name || "Valore";
+                        }
+                        this.debouncedUpdatePreview();
+                    } catch (err) {
+                        console.error("Errore nel recupero dati:", err);
+                        alert("Impossibile recuperare il nome utente in automatico. Puoi scriverlo manualmente.");
+                    }
                 },
                 removeLink(index) {
                     if(confirm('Sei sicuro di voler eliminare questo link?')) {

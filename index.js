@@ -230,6 +230,80 @@ app.post('/admin/upload-image', (req, res) => {
     }
 });
 
+// Fetch URL metadata endpoint (for automatic social handle / profile name detection)
+app.post('/admin/fetch-url-meta', async (req, res) => {
+    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
+    try {
+        const { url } = req.body;
+        if (!url) return res.status(400).json({ success: false, error: 'No URL provided' });
+        
+        let username = null;
+        let title = null;
+        
+        // 1. Check direct URL pattern regexes
+        const igMatch = url.match(/instagram\.com\/([^/?#]+)/i);
+        if (igMatch && igMatch[1] && !['www', 'p', 'reel', 'reels', 'explore', 'stories'].includes(igMatch[1].toLowerCase())) {
+            username = '@' + igMatch[1];
+        }
+        
+        const tkMatch = url.match(/tiktok\.com\/@?([^/?#]+)/i);
+        if (!username && tkMatch && tkMatch[1] && !['video', 'foryou', 'explore', 'live'].includes(tkMatch[1].toLowerCase())) {
+            username = '@' + tkMatch[1].replace(/^@/, '');
+        }
+        
+        const ytMatch = url.match(/youtube\.com\/@([^/?#]+)/i);
+        if (!username && ytMatch && ytMatch[1]) {
+            username = '@' + ytMatch[1];
+        }
+        
+        const xMatch = url.match(/(?:twitter|x)\.com\/([^/?#]+)/i);
+        if (!username && xMatch && xMatch[1] && !['home', 'explore', 'search', 'messages', 'notifications'].includes(xMatch[1].toLowerCase())) {
+            username = '@' + xMatch[1];
+        }
+
+        // 2. If no direct username or if we want webpage title, fetch HTML
+        try {
+            const fetchRes = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
+            });
+            if (fetchRes.ok) {
+                const html = await fetchRes.text();
+                const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+                const titleTagMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+                
+                if (ogTitleMatch && ogTitleMatch[1]) {
+                    title = ogTitleMatch[1].trim();
+                } else if (titleTagMatch && titleTagMatch[1]) {
+                    title = titleTagMatch[1].replace(/ - YouTube| \| LinkedIn| - TikTok| - Instagram| on Spotify/i, '').trim();
+                }
+                
+                // If we didn't find username via URL regex, try to extract from title
+                if (!username && title) {
+                    const atMatch = title.match(/(@[a-zA-Z0-9_.-]+)/);
+                    if (atMatch && atMatch[1]) {
+                        username = atMatch[1];
+                    } else if (title.includes(' - ')) {
+                        username = title.split(' - ')[0].trim();
+                    } else if (title.includes(' | ')) {
+                        username = title.split(' | ')[0].trim();
+                    } else {
+                        username = title;
+                    }
+                }
+            }
+        } catch (fetchErr) {
+            console.log('Could not fetch external URL HTML:', fetchErr.message);
+        }
+        
+        res.json({ success: true, username: username || title || null, title: title || null });
+    } catch (err) {
+        console.error('Fetch URL meta error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log('Server started on port ' + PORT);
 });
