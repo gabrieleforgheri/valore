@@ -209,6 +209,27 @@ app.post('/admin/update', (req, res) => {
     res.json({ success: true });
 });
 
+// Upload image endpoint
+app.post('/admin/upload-image', (req, res) => {
+    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
+    try {
+        const { filename, base64 } = req.body;
+        if (!base64) return res.status(400).json({ success: false, error: 'No image data provided' });
+        
+        const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        const cleanName = (filename || 'image.png').replace(/[^a-zA-Z0-9.-]/g, '_');
+        const newFileName = `upload_${Date.now()}_${cleanName}`;
+        const targetPath = path.join(__dirname, 'public', 'images', newFileName);
+        
+        fs.writeFileSync(targetPath, buffer);
+        res.json({ success: true, url: `images/${newFileName}` });
+    } catch (err) {
+        console.error('Image upload error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log('Server started on port ' + PORT);
 });

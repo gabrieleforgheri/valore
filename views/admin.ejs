@@ -6,6 +6,7 @@
     <title>Dashboard - Valore Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         body { background: #f3f4f6; }
         .drag-handle { cursor: grab; }
@@ -57,6 +58,19 @@
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold mb-4">Profilo</h2>
                         <div class="space-y-4">
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                <img :src="profile.image ? (profile.image.startsWith('http') || profile.image.startsWith('data:') ? profile.image : '/' + profile.image) : ''" class="w-16 h-16 rounded-full object-cover shadow border border-white shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Foto Profilo</label>
+                                    <div class="flex gap-2">
+                                        <input v-model="profile.image" @input="debouncedUpdatePreview" type="text" class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs min-w-0" placeholder="URL o percorso immagine">
+                                        <label class="px-3 py-2 bg-black hover:bg-gray-800 text-white font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-sm">
+                                            <span>Carica Foto</span>
+                                            <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => profile.image = url)">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-600 mb-1">Nome Profilo</label>
                                 <input v-model="profile.name" @input="debouncedUpdatePreview" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all">
@@ -65,46 +79,89 @@
                                 <label class="block text-sm font-medium text-gray-600 mb-1">Bio / Descrizione</label>
                                 <input v-model="profile.description" @input="debouncedUpdatePreview" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all" placeholder="Scrivi qualcosa su di te...">
                             </div>
+
+                            <div class="border-t border-gray-200 pt-5 mt-5">
+                                <h3 class="text-sm font-bold mb-3 flex items-center gap-2 text-gray-800">
+                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                    <span>Pulsante Business Mail / Partnership</span>
+                                </h3>
+                                <div class="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Indirizzo Email Business</label>
+                                        <input v-model="profile.businessMail" @input="debouncedUpdatePreview" type="email" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm" placeholder="es. partnership@valore.it (lascia vuoto per nascondere)">
+                                    </div>
+                                    <div v-if="profile.businessMail" class="space-y-3 pt-2">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Testo Pulsante</label>
+                                            <input v-model="profile.businessMailTitle" @input="debouncedUpdatePreview" type="text" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm" placeholder="Contatto Business / Partnership">
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Sfondo</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input v-model="profile.businessMailColor" @input="debouncedUpdatePreview" type="color" class="w-8 h-8 rounded border-0 cursor-pointer">
+                                                    <input v-model="profile.businessMailColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs uppercase" placeholder="rgba(...) o hex">
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Testo</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input v-model="profile.businessMailTextColor" @input="debouncedUpdatePreview" type="color" class="w-8 h-8 rounded border-0 cursor-pointer">
+                                                    <input v-model="profile.businessMailTextColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs uppercase" placeholder="#ffffff">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                            <h2 class="text-lg font-bold">I tuoi Link</h2>
+                            <h2 class="text-lg font-bold">I tuoi Link <span class="text-xs font-normal text-gray-400 ml-1">(Trascina per ordinare)</span></h2>
                             <button @click="addLink" class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-full transition-colors shadow-sm text-center">
                                 + Aggiungi Link
                             </button>
                         </div>
 
-                        <div class="space-y-4">
-                            <div v-for="(link, index) in links" :key="link.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-4 transition-all relative group hover:border-gray-300">
+                        <div class="space-y-4" ref="linksList">
+                            <div v-for="(link, index) in links" :key="link.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-3 transition-all relative group hover:border-gray-300">
                                 
-                                <!-- Move buttons -->
-                                <div class="flex flex-col justify-center items-center gap-1 text-gray-300">
-                                    <button @click="moveUp(index)" :disabled="index === 0" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                                    <button @click="moveDown(index)" :disabled="index === links.length - 1" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                <!-- Move & Drag handle -->
+                                <div class="flex flex-col justify-center items-center gap-1 text-gray-400">
+                                    <div class="drag-handle p-1.5 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-grab active:cursor-grabbing" title="Trascina per spostare">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                                    </div>
                                 </div>
 
                                 <!-- Link form -->
-                                <div class="flex-1 space-y-3">
+                                <div class="flex-1 space-y-3 min-w-0">
                                     <div class="flex gap-3">
                                         <div class="flex-1">
-                                            <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-purple-500 rounded-none text-md font-bold focus:outline-none transition-colors">
+                                            <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo Link" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-purple-500 rounded-none text-md font-bold focus:outline-none transition-colors">
                                         </div>
-                                        <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0">
+                                        <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0" title="Elimina link">
                                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </div>
                                     <div>
                                         <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL (es. https://...)" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-gray-400 rounded-none text-sm text-gray-600 focus:outline-none transition-colors">
                                     </div>
-                                    <div v-if="link.featured">
-                                        <input v-model="link.thumbnail" @input="debouncedUpdatePreview" placeholder="URL Immagine Grande (opzionale)" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 mt-2">
+                                    <div class="pt-1">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Immagine / Miniatura Link</label>
+                                        <div class="flex gap-2">
+                                            <input v-model="link.thumbnail" @input="debouncedUpdatePreview" placeholder="URL Immagine o carica foto" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                                <span>Carica Foto</span>
+                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => link.thumbnail = url)">
+                                            </label>
+                                        </div>
                                     </div>
                                     <div class="pt-2 flex items-center justify-between border-t border-gray-100">
                                         <div class="flex items-center gap-2">
                                             <svg width="16" height="16" fill="currentColor" class="text-yellow-500" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
-                                            <span class="text-xs font-semibold text-gray-600">In Evidenza</span>
+                                            <span class="text-xs font-semibold text-gray-600">In Evidenza (Stile Scheda Grande)</span>
                                         </div>
                                         <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                                             <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all border-gray-300"/>
@@ -135,18 +192,19 @@
                             Nessun social link presente. Clicca "Aggiungi Social" per crearne uno.
                         </div>
 
-                        <div v-else class="space-y-4">
-                            <div v-for="(social, index) in socials" :key="social.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-4 transition-all relative group hover:border-gray-300">
-                                <!-- Move buttons -->
-                                <div class="flex flex-col justify-center items-center gap-1 text-gray-300">
-                                    <button @click="moveUpSocial(index)" :disabled="index === 0" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                                    <button @click="moveDownSocial(index)" :disabled="index === socials.length - 1" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                        <div v-else class="space-y-4" ref="socialsList">
+                            <div v-for="(social, index) in socials" :key="social.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-3 transition-all relative group hover:border-gray-300">
+                                <!-- Move & Drag handle -->
+                                <div class="flex flex-col justify-center items-center gap-1 text-gray-400">
+                                    <div class="drag-handle p-1.5 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-grab active:cursor-grabbing" title="Trascina per spostare">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                                    </div>
                                 </div>
 
                                 <!-- Social form -->
-                                <div class="flex-1 space-y-3">
+                                <div class="flex-1 space-y-3 min-w-0">
                                     <div class="flex gap-3">
-                                        <div class="w-1/3">
+                                        <div class="w-1/3 min-w-[120px]">
                                             <label class="block text-xs font-semibold text-gray-500 mb-1">Piattaforma</label>
                                             <select v-model="social.platform" @change="debouncedUpdatePreview" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500">
                                                 <option value="instagram">Instagram</option>
@@ -167,19 +225,25 @@
                                                 <option value="custom">Personalizzato (Icona personalizzata)</option>
                                             </select>
                                         </div>
-                                        <div class="flex-1">
+                                        <div class="flex-1 min-w-0">
                                             <label class="block text-xs font-semibold text-gray-500 mb-1">URL Profilo</label>
                                             <input v-model="social.url" @input="debouncedUpdatePreview" placeholder="https://..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500">
                                         </div>
                                         <div class="flex items-end">
-                                            <button @click="removeSocial(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0">
+                                            <button @click="removeSocial(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0" title="Elimina social">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
                                         </div>
                                     </div>
                                     <div v-if="social.platform === 'custom'" class="pt-2 border-t border-gray-100">
-                                        <label class="block text-xs font-semibold text-gray-500 mb-1">URL o Base64 Icona Personalizzata (consigliato 16x16 o 32x32)</label>
-                                        <input v-model="social.icon" @input="debouncedUpdatePreview" placeholder="https://... oppure data:image/png;base64,..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Icona Personalizzata (16x16 o 32x32)</label>
+                                        <div class="flex gap-2">
+                                            <input v-model="social.icon" @input="debouncedUpdatePreview" placeholder="https://... o carica foto" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                                <span>Carica Icona</span>
+                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => social.icon = url)">
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -194,11 +258,11 @@
                         <h2 class="text-lg font-bold mb-6">Sfondo</h2>
                         
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div @click="theme.bgType = 'color'; debouncedUpdatePreview()" :class="theme.bgType === 'color' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
+                            <div @click="theme.bgType = 'solid'; debouncedUpdatePreview()" :class="theme.bgType !== 'gradient' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
                                 <div class="w-full h-16 rounded-lg bg-gray-200 mb-2"></div>
                                 <span class="text-sm font-semibold">Tinta Unita</span>
                             </div>
-                            <div @click="theme.bgType = 'gradient'; debouncedUpdatePreview()" :class="theme.bgType === 'gradient' ? 'ring-2 ring-black' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
+                            <div @click="theme.bgType = 'gradient'; debouncedUpdatePreview()" :class="theme.bgType === 'gradient' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-4 text-center hover:bg-gray-50 transition-all">
                                 <div class="w-full h-16 rounded-lg bg-gradient-to-b from-gray-300 to-gray-500 mb-2"></div>
                                 <span class="text-sm font-semibold">Sfumatura</span>
                             </div>
@@ -224,10 +288,28 @@
                                     <option value="to right">Da sinistra a destra (→)</option>
                                     <option value="to left">Da destra a sinistra (←)</option>
                                     <option value="to top">Dal basso verso l'alto (↑)</option>
-                                    <option value="radial">Dal centro all'esterno (Circolare)</option>
+                                    <option value="radial">Dal centro all'esterno (Circolare / Radiale)</option>
                                     <option value="135deg">Diagonale (in alto a sx → in basso a dx)</option>
                                     <option value="225deg">Diagonale (in alto a dx → in basso a sx)</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-4">Dimensione Icone Social</h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div @click="theme.socialIconSize = '20px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '20px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Piccole (20px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '26px'; debouncedUpdatePreview()" :class="!theme.socialIconSize || theme.socialIconSize === '26px' || theme.socialIconSize === '28px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Medie (26px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '32px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '32px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Grandi (32px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '40px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '40px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Max (40px)</span>
                             </div>
                         </div>
                     </div>
@@ -353,7 +435,58 @@
                     previewTimeout: null
                 }
             },
+            mounted() {
+                this.$nextTick(() => {
+                    if (this.$refs.linksList) {
+                        Sortable.create(this.$refs.linksList, {
+                            handle: '.drag-handle',
+                            animation: 150,
+                            onEnd: (evt) => {
+                                const item = this.links.splice(evt.oldIndex, 1)[0];
+                                this.links.splice(evt.newIndex, 0, item);
+                                this.debouncedUpdatePreview();
+                            }
+                        });
+                    }
+                    if (this.$refs.socialsList) {
+                        Sortable.create(this.$refs.socialsList, {
+                            handle: '.drag-handle',
+                            animation: 150,
+                            onEnd: (evt) => {
+                                const item = this.socials.splice(evt.oldIndex, 1)[0];
+                                this.socials.splice(evt.newIndex, 0, item);
+                                this.debouncedUpdatePreview();
+                            }
+                        });
+                    }
+                });
+            },
             methods: {
+                async uploadFile(event, callback) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64 = e.target.result;
+                        try {
+                            const res = await fetch('/admin/upload-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ imageBase64: base64, filename: file.name })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                callback(data.url);
+                                this.debouncedUpdatePreview();
+                            } else {
+                                alert('Errore caricamento: ' + (data.error || 'sconosciuto'));
+                            }
+                        } catch (err) {
+                            alert('Errore di rete durante il caricamento');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                },
                 addSocial() {
                     this.socials.push({
                         id: Date.now().toString(),
