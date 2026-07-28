@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background: #f3f4f6; }
         .drag-handle { cursor: grab; }
@@ -393,18 +394,81 @@
                 <!-- STATS TAB -->
                 <div v-show="currentTab === 'stats'" class="space-y-6">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-2">Statistiche e Clic</h2>
-                        <p class="text-xs text-gray-500 mb-6">Visualizza i dati e l'interesse dei tuoi visitatori sui tuoi link.</p>
-                        
-                        <div class="grid grid-cols-2 gap-4 mb-6">
+                        <h2 class="text-lg font-bold mb-1">📊 Statistiche & Analytics</h2>
+                        <p class="text-xs text-gray-400">Analizza le visite, i clic sui social e sui link in tempo reale</p>
+                    </div>
+
+                    <!-- 1. PANORAMICA -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Panoramica</h3>
+                        <div class="grid grid-cols-2 gap-4">
                             <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100 text-center">
-                                <span class="block text-2xl font-bold text-purple-700"><%= (data.analytics && data.analytics.totalVisits) || 0 %></span>
+                                <span class="block text-2xl font-bold text-purple-700">{{ stats.totalVisits || 0 }}</span>
                                 <span class="text-xs font-semibold text-purple-600 uppercase tracking-wide">Visite Totali</span>
                             </div>
                             <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100 text-center">
-                                <span class="block text-2xl font-bold text-purple-700"><%= (data.analytics && data.analytics.totalClicks) || 0 %></span>
-                                <span class="text-xs font-semibold text-purple-600 uppercase tracking-wide">Clic Sui Link</span>
+                                <span class="block text-2xl font-bold text-purple-700">{{ stats.totalClicks || 0 }}</span>
+                                <span class="text-xs font-semibold text-purple-600 uppercase tracking-wide">Clic Totali sui Link</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. SOCIALS -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">2. Socials</h3>
+                        <div v-if="!stats.socialClicks || stats.socialClicks.length === 0" class="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-2xl text-center">
+                            Nessun social link presente.
+                        </div>
+                        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div v-for="s in stats.socialClicks" :key="s.id" class="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                                        {{ s.platform ? s.platform.substring(0, 2) : 'SO' }}
+                                    </div>
+                                    <span class="font-bold text-sm text-gray-800 capitalize">{{ s.platform || 'Social' }}</span>
+                                </div>
+                                <span class="px-3 py-1 bg-white border border-gray-200 rounded-full font-mono text-xs font-bold text-purple-700 shadow-sm">
+                                    {{ s.count || 0 }} clic
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. LINKBOX -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">3. LinkBox</h3>
+                        <div v-if="!stats.linkClicks || stats.linkClicks.length === 0" class="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-2xl text-center">
+                            Nessun link box presente.
+                        </div>
+                        <div v-else class="space-y-2.5">
+                            <div v-for="l in stats.linkClicks" :key="l.id" class="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 flex items-center justify-between">
+                                <span class="font-bold text-sm text-gray-800 truncate pr-4">{{ l.title }}</span>
+                                <span class="px-3 py-1 bg-white border border-gray-200 rounded-full font-mono text-xs font-bold text-purple-700 shadow-sm shrink-0">
+                                    {{ l.count || 0 }} clic
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. GRAFICO & ESPORTAZIONE -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">4. Grafico Clic Giornalieri</h3>
+                                <p class="text-[11px] text-gray-400 mt-0.5">Seleziona un intervallo (max 31 giorni)</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="date" v-model="chartStartDate" @change="fetchChartData" class="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700">
+                                <span class="text-xs font-bold text-gray-400">a</span>
+                                <input type="date" v-model="chartEndDate" @change="fetchChartData" class="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700">
+                                <button @click="exportCSV" class="px-3.5 py-1.5 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl text-xs transition-colors shadow-sm flex items-center gap-1.5">
+                                    <span>📥</span> Esporta CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 h-64 relative">
+                            <canvas id="clicksChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -560,6 +624,7 @@
             },
             mounted() {
                 this.$nextTick(() => {
+                    this.initChart();
                     if (this.$refs.linksList) {
                         Sortable.create(this.$refs.linksList, {
                             handle: '.drag-handle',
@@ -596,6 +661,98 @@
                 });
             },
             methods: {
+                async initChart() {
+                    this.$nextTick(async () => {
+                        await this.fetchChartData();
+                    });
+                },
+                async fetchChartData() {
+                    const start = new Date(this.chartStartDate);
+                    const end = new Date(this.chartEndDate);
+                    const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 31) {
+                        alert("L'intervallo di date massimo selezionabile per il grafico è di 31 giorni (1 mese).");
+                        const maxStart = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        this.chartStartDate = maxStart.toISOString().split('T')[0];
+                    }
+                    
+                    try {
+                        const res = await fetch(`/admin/api/analytics?startDate=${this.chartStartDate}&endDate=${this.chartEndDate}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.detailedChartData = data.detailedClicks || [];
+                            this.renderChart(data.dailyClicks || []);
+                        }
+                    } catch(e) {
+                        console.error('Error fetching chart data:', e);
+                    }
+                },
+                renderChart(dailyClicks) {
+                    const ctx = document.getElementById('clicksChart');
+                    if (!ctx) return;
+                    
+                    const labels = dailyClicks.map(d => d.date);
+                    const counts = dailyClicks.map(d => d.count);
+                    
+                    if (this.chartInstance) {
+                        this.chartInstance.destroy();
+                    }
+                    
+                    this.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels.length ? labels : [this.chartStartDate],
+                            datasets: [{
+                                label: 'Clic Giornalieri',
+                                data: counts.length ? counts : [0],
+                                borderColor: '#9333ea',
+                                backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: '#9333ea'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0 }
+                                }
+                            }
+                        }
+                    });
+                },
+                exportCSV() {
+                    if (!this.detailedChartData || this.detailedChartData.length === 0) {
+                        alert("Nessun dato disponibile nel periodo selezionato per l'esportazione.");
+                        return;
+                    }
+                    
+                    let csv = "Data;Titolo Link / Social;URL;Clic\n";
+                    this.detailedChartData.forEach(row => {
+                        const date = row.date || '';
+                        const title = (row.linkTitle || '').replace(/;/g, ',');
+                        const url = (row.linkUrl || '').replace(/;/g, ',');
+                        const count = row.count || 0;
+                        csv += `"${date}";"${title}";"${url}";${count}\n`;
+                    });
+                    
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `analytics_report_${this.chartStartDate}_to_${this.chartEndDate}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                },
                 onLinkGapPresetChange() {
                     if (this.linkGapPreset !== 'custom') {
                         this.profile.linkGap = parseInt(this.linkGapPreset, 10);
@@ -604,6 +761,7 @@
                 },
                 initSectionsSortable() {
                     this.$nextTick(() => {
+                    this.initChart();
                         if (this.$refs.sectionsList && !this._sectionsSortableInitialized) {
                             this._sectionsSortableInitialized = true;
                             Sortable.create(this.$refs.sectionsList, {

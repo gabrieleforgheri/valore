@@ -155,53 +155,119 @@ app.get('/admin/dashboard', (req, res) => {
     
     const totalVisits = db.prepare('SELECT COUNT(*) as count FROM visits').get().count;
     const totalClicks = db.prepare('SELECT COUNT(*) as count FROM clicks').get().count;
-    
-    const dailyVisits = db.prepare(`
-        SELECT date(timestamp) as date, COUNT(*) as count 
-        FROM visits 
-        WHERE timestamp > datetime('now', '-7 days') 
-        GROUP BY date(timestamp) 
-        ORDER BY date ASC
-    `).all();
-
-    const topLinksRaw = db.prepare(`
-        SELECT linkUrl, MAX(linkTitle) as linkTitle, COUNT(*) as count 
-        FROM clicks 
-        GROUP BY linkUrl 
-        ORDER BY count DESC 
-        LIMIT 10
-    `).all();
 
     const currentData = getData();
-    const urlToTitleMap = {};
-    const cleanUrl = (u) => u ? u.trim().replace(/\/$/, '') : '';
-    if (currentData.links) {
-        currentData.links.forEach(l => {
-            if (l.url) urlToTitleMap[cleanUrl(l.url)] = l.title;
-        });
-    }
-    if (currentData.socials) {
+    
+    // Social Clicks calculation
+    const socialClicksMap = {};
+    if (currentData.socials && Array.isArray(currentData.socials)) {
         currentData.socials.forEach(s => {
-            if (s.url) urlToTitleMap[cleanUrl(s.url)] = `Social: ${s.platform.toUpperCase()}`;
+            const platName = (s.platform || 'social').toUpperCase();
+            socialClicksMap[s.id] = {
+                id: s.id,
+                platform: s.platform,
+                name: platName,
+                count: 0
+            };
         });
     }
 
-    const topLinks = topLinksRaw.map(row => {
-        let title = row.linkTitle || urlToTitleMap[cleanUrl(row.linkUrl)] || row.linkUrl;
-        return {
-            title: title,
-            url: row.linkUrl,
-            linkUrl: row.linkUrl,
-            count: row.count
-        };
+    // LinkBox Clicks calculation
+    const linkClicksMap = {};
+    if (currentData.links && Array.isArray(currentData.links)) {
+        currentData.links.forEach(l => {
+            linkClicksMap[l.id] = {
+                id: l.id,
+                title: l.title || 'Link',
+                count: 0
+            };
+        });
+    }
+
+    // Query all click totals
+    const clickCountsRaw = db.prepare(`
+        SELECT linkTitle, linkUrl, COUNT(*) as count 
+        FROM clicks 
+        GROUP BY linkTitle, linkUrl
+    `).all();
+
+    clickCountsRaw.forEach(row => {
+        const rawTitle = (row.linkTitle || '').trim();
+        const rawUrl = (row.linkUrl || '').trim().replace(/\/$/, '');
+
+        if (currentData.socials) {
+            currentData.socials.forEach(s => {
+                const sUrl = (s.url || '').trim().replace(/\/$/, '');
+                const platMatch = `Social: ${s.platform.toUpperCase()}`;
+                if ((sUrl && rawUrl && sUrl.toLowerCase() === rawUrl.toLowerCase()) || rawTitle.toUpperCase() === platMatch.toUpperCase()) {
+                    if (socialClicksMap[s.id]) socialClicksMap[s.id].count += row.count;
+                }
+            });
+        }
+
+        if (currentData.links) {
+            currentData.links.forEach(l => {
+                const lUrl = (l.url || '').trim().replace(/\/$/, '');
+                if ((lUrl && rawUrl && lUrl.toLowerCase() === rawUrl.toLowerCase()) || (l.title && rawTitle.toLowerCase() === l.title.toLowerCase())) {
+                    if (linkClicksMap[l.id]) linkClicksMap[l.id].count += row.count;
+                }
+            });
+        }
     });
 
-    const stats = { totalVisits, totalClicks, dailyVisits, topLinks };
+    const socialClicks = Object.values(socialClicksMap);
+    const linkClicks = Object.values(linkClicksMap);
+
+    const stats = { totalVisits, totalClicks, socialClicks, linkClicks };
     
-    res.render('admin', { data: getData(), stats });
+    res.render('admin', { data: currentData, stats });
 });
 
-// Update links
+// Analytics Chart & Export API
+app.get('/admin/api/analytics', (req, res) => {
+    if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: 'Unauthorized' });
+
+    let startDate = req.query.startDate;
+    let endDate = req.query.endDate;
+
+    const today = new Date();
+    if (!endDate) {
+        endDate = today.toISOString().split('T')[0];
+    }
+    if (!startDate) {
+        const start = new Date();
+        start.setDate(today.getDate() - 14);
+        startDate = start.toISOString().split('T')[0];
+    }
+
+    // Limit max date range to 31 days
+    const startMs = new Date(startDate).getTime();
+    const endMs = new Date(endDate).getTime();
+    const diffDays = Math.ceil((endMs - startMs) / (1000 * 60 * 60 * 24));
+    if (diffDays > 31) {
+        const maxStart = new Date(endMs - 30 * 24 * 60 * 60 * 1000);
+        startDate = maxStart.toISOString().split('T')[0];
+    }
+
+    const dailyClicks = db.prepare(`
+        SELECT date(timestamp) as date, COUNT(*) as count 
+        FROM clicks 
+        WHERE date(timestamp) >= ? AND date(timestamp) <= ?
+        GROUP BY date(timestamp)
+        ORDER BY date ASC
+    `).all(startDate, endDate);
+
+    const detailedClicks = db.prepare(`
+        SELECT date(timestamp) as date, linkTitle, linkUrl, COUNT(*) as count 
+        FROM clicks 
+        WHERE date(timestamp) >= ? AND date(timestamp) <= ?
+        GROUP BY date(timestamp), linkTitle, linkUrl
+        ORDER BY date ASC
+    `).all(startDate, endDate);
+
+    res.json({ success: true, startDate, endDate, dailyClicks, detailedClicks });
+});
+
 app.post('/admin/update', (req, res) => {
     if (!req.session.loggedIn) return res.redirect('/admin');
     saveData(req.body);
