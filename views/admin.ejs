@@ -305,8 +305,11 @@
                             <% } else { %>
                                 <% stats.topLinks.forEach(link => { %>
                                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <span class="text-sm font-medium text-gray-700 truncate max-w-[70%]"><%= link.linkUrl %></span>
-                                    <span class="px-3 py-1 bg-black text-white text-xs font-bold rounded-full"><%= link.count %></span>
+                                    <div class="truncate max-w-[75%]">
+                                        <p class="text-sm font-bold text-gray-800 truncate"><%= link.title || link.url %></p>
+                                        <p class="text-[11px] font-normal text-gray-400 truncate mt-0.5"><%= link.url %></p>
+                                    </div>
+                                    <span class="px-3 py-1 bg-black text-white text-xs font-bold rounded-full shrink-0 ml-2"><%= link.count %></span>
                                 </div>
                                 <% }) %>
                             <% } %>

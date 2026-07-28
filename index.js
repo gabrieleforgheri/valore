@@ -16,11 +16,18 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS clicks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     linkUrl TEXT,
+    linkTitle TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     visitId INTEGER,
     FOREIGN KEY(visitId) REFERENCES visits(id)
   );
 `);
+
+try {
+    db.exec('ALTER TABLE clicks ADD COLUMN linkTitle TEXT;');
+} catch (e) {
+    // Column already exists
+}
 
 const app = express();
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3000;
@@ -78,6 +85,7 @@ app.get('/', (req, res) => {
 
 // Analytics Endpoints
 app.post('/api/track/visit', (req, res) => {
+    if (req.session && req.session.loggedIn) return res.json({ success: true, visitId: null });
     try {
         const stmt = db.prepare('INSERT INTO visits (ip, userAgent) VALUES (?, ?)');
         const info = stmt.run(req.ip, req.get('User-Agent'));
@@ -88,6 +96,7 @@ app.post('/api/track/visit', (req, res) => {
 });
 
 app.post('/api/track/ping', (req, res) => {
+    if (req.session && req.session.loggedIn) return res.json({ success: true });
     try {
         const { visitId, timeSpent } = req.body;
         if (visitId) {
@@ -101,10 +110,11 @@ app.post('/api/track/ping', (req, res) => {
 });
 
 app.post('/api/track/click', (req, res) => {
+    if (req.session && req.session.loggedIn) return res.json({ success: true });
     try {
-        const { linkUrl, visitId } = req.body;
-        const stmt = db.prepare('INSERT INTO clicks (linkUrl, visitId) VALUES (?, ?)');
-        stmt.run(linkUrl, visitId || null);
+        const { linkUrl, linkTitle, visitId } = req.body;
+        const stmt = db.prepare('INSERT INTO clicks (linkUrl, linkTitle, visitId) VALUES (?, ?, ?)');
+        stmt.run(linkUrl, linkTitle || null, visitId || null);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -115,7 +125,7 @@ app.post('/api/track/click', (req, res) => {
 app.get('/preview', (req, res) => {
     if (!req.session.loggedIn) return res.status(403).send('Unauthorized');
     const data = req.session.draft || getData();
-    res.render('index', data);
+    res.render('index', { ...data, isPreview: true });
 });
 
 app.post('/admin/preview', (req, res) => {
@@ -154,13 +164,37 @@ app.get('/admin/dashboard', (req, res) => {
         ORDER BY date ASC
     `).all();
 
-    const topLinks = db.prepare(`
-        SELECT linkUrl, COUNT(*) as count 
+    const topLinksRaw = db.prepare(`
+        SELECT linkUrl, MAX(linkTitle) as linkTitle, COUNT(*) as count 
         FROM clicks 
         GROUP BY linkUrl 
         ORDER BY count DESC 
         LIMIT 10
     `).all();
+
+    const currentData = getData();
+    const urlToTitleMap = {};
+    const cleanUrl = (u) => u ? u.trim().replace(/\/$/, '') : '';
+    if (currentData.links) {
+        currentData.links.forEach(l => {
+            if (l.url) urlToTitleMap[cleanUrl(l.url)] = l.title;
+        });
+    }
+    if (currentData.socials) {
+        currentData.socials.forEach(s => {
+            if (s.url) urlToTitleMap[cleanUrl(s.url)] = `Social: ${s.platform.toUpperCase()}`;
+        });
+    }
+
+    const topLinks = topLinksRaw.map(row => {
+        let title = row.linkTitle || urlToTitleMap[cleanUrl(row.linkUrl)] || row.linkUrl;
+        return {
+            title: title,
+            url: row.linkUrl,
+            linkUrl: row.linkUrl,
+            count: row.count
+        };
+    });
 
     const stats = { totalVisits, totalClicks, dailyVisits, topLinks };
     
