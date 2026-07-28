@@ -28,11 +28,13 @@
                         <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Socials</button>
                         <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
                         <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
+                        <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors flex items-center gap-1"><span>🧩</span> Sezioni</button>
                     </div>
                 </div>
                 <div class="flex gap-3">
                     <button @click="showMobilePreview = !showMobilePreview" class="md:hidden px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full">Anteprima</button>
                     <a href="/" target="_blank" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors hidden sm:block">Vedi Sito</a>
+                    <button @click="window.location.reload()" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors shadow-sm border border-red-100 flex items-center gap-1">Annulla</button>
                     <button @click="save" class="px-5 py-2 text-sm font-semibold text-white bg-black hover:bg-gray-800 rounded-full transition-colors shadow-md flex items-center gap-2">
                         <span v-if="saving">Salvataggio...</span>
                         <span v-else>Pubblica Modifiche</span>
@@ -45,6 +47,7 @@
                 <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Socials</button>
                 <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
                 <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
+                <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm flex items-center justify-center gap-1"><span>🧩</span> Sezioni</button>
             </div>
         </nav>
 
@@ -97,10 +100,19 @@
                                         </div>
                                         <div class="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Sfondo</label>
-                                                <div class="flex items-center gap-2">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <label class="block text-xs font-semibold text-gray-600">Colore Sfondo</label>
+                                                    <label class="flex items-center gap-1 cursor-pointer">
+                                                        <input type="checkbox" v-model="profile.businessMailTransparent" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-black focus:ring-black w-3.5 h-3.5">
+                                                        <span class="text-[10px] font-bold text-purple-600 uppercase">Trasparente</span>
+                                                    </label>
+                                                </div>
+                                                <div v-if="!profile.businessMailTransparent" class="flex items-center gap-2">
                                                     <input v-model="profile.businessMailColor" @input="debouncedUpdatePreview" type="color" class="w-8 h-8 rounded border-0 cursor-pointer">
                                                     <input v-model="profile.businessMailColor" @input="debouncedUpdatePreview" type="text" class="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs uppercase" placeholder="rgba(...) o hex">
+                                                </div>
+                                                <div v-else class="px-3 py-2 bg-gray-100 rounded-lg text-xs text-gray-500 italic text-center">
+                                                    Sfondo reso trasparente
                                                 </div>
                                             </div>
                                             <div>
@@ -149,32 +161,70 @@
                                         <input v-model="link.url" @input="debouncedUpdatePreview" placeholder="URL (es. https://...)" class="w-full px-3 py-2 bg-transparent border-b border-transparent focus:border-gray-400 rounded-none text-sm text-gray-600 focus:outline-none transition-colors">
                                     </div>
                                     <div class="pt-1">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Nome Profilo / Sottotitolo (es. @rarestvalore)</label>
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Sottotitolo</label>
                                         <div class="flex gap-2">
-                                            <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="Lascia vuoto per rilevamento automatico dal social/link" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
                                             <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg text-xs transition-colors shrink-0 flex items-center gap-1" title="Rileva nome utente in automatico">
                                                 <span>✨ Auto-rileva</span>
                                             </button>
                                         </div>
                                     </div>
                                     <div class="pt-1">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Immagine / Miniatura Link</label>
-                                        <div class="flex gap-2">
-                                            <input v-model="link.thumbnail" @input="debouncedUpdatePreview" placeholder="URL Immagine o carica foto" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Immagine</label>
+                                        <div class="flex gap-3 items-center">
+                                            <img v-if="link.thumbnail" :src="link.thumbnail" class="w-10 h-10 rounded-md object-cover shadow-sm shrink-0 border border-gray-200 bg-white">
+                                            <div v-else class="w-10 h-10 rounded-md bg-gray-100 border border-gray-200 border-dashed flex items-center justify-center shrink-0">
+                                                <svg width="16" height="16" fill="currentColor" class="text-gray-400" viewBox="0 0 16 16"><path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3zM10.5 7a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z"/><path d="M2 10.5l4-4a.5.5 0 0 1 .71 0l3 3 2.5-2.5a.5.5 0 0 1 .71 0l3 3V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3.5z"/></svg>
+                                            </div>
+                                            <label class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors flex-1 text-center shadow-sm">
                                                 <span>Carica Foto</span>
                                                 <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => link.thumbnail = url)">
                                             </label>
+                                            <button v-if="link.thumbnail" @click="link.thumbnail = ''; debouncedUpdatePreview()" type="button" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs shrink-0 transition-colors shadow-sm" title="Rimuovi Immagine">Rimuovi</button>
                                         </div>
                                     </div>
                                     <div class="pt-2 flex items-center justify-between border-t border-gray-100">
                                         <div class="flex items-center gap-2">
                                             <svg width="16" height="16" fill="currentColor" class="text-yellow-500" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
-                                            <span class="text-xs font-semibold text-gray-600">In Evidenza (Stile Scheda Grande)</span>
+                                            <span class="text-xs font-semibold text-gray-600">In Evidenza</span>
                                         </div>
                                         <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                                             <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all border-gray-300"/>
                                             <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
+                                        </div>
+                                    </div>
+                                    <div v-if="link.featured" class="pt-2 border-t border-gray-100 mt-2">
+                                        <label class="block text-xs font-bold text-gray-700 mb-1">📐 Grandezza Box in Evidenza (5 opzioni)</label>
+                                        <select v-model="link.featuredSize" @change="debouncedUpdatePreview" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black">
+                                            <option value="1">1 - Compatto (XS)</option>
+                                            <option value="2">2 - Ridotto (S)</option>
+                                            <option value="3">3 - Normale / Standard (M)</option>
+                                            <option value="4">4 - Grande (L)</option>
+                                            <option value="5">5 - Gigante / Quadrato (XL)</option>
+                                        </select>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-100 mt-2">
+                                        <label class="block text-xs font-bold text-gray-600 mb-1">🎨 Iconcina Sotto Titolo (16x16 o 32x32)</label>
+                                        <div class="flex gap-2">
+                                            <input v-model="link.customIcon" @input="debouncedUpdatePreview" placeholder="URL o carica icona..." class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                            <label class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                                <span>Carica Icona</span>
+                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => link.customIcon = url)">
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="pt-2 flex items-center justify-between border-t border-gray-100 mt-2">
+                                        <span class="text-xs font-semibold text-gray-600">Sfondo Trasparente per questo link</span>
+                                        <label class="flex items-center gap-1 cursor-pointer">
+                                            <input type="checkbox" v-model="link.transparent" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-black focus:ring-black w-4 h-4">
+                                            <span class="text-xs font-bold text-purple-600">Trasparente</span>
+                                        </label>
+                                    </div>
+                                    <div v-if="!link.transparent" class="pt-2 border-t border-gray-100 mt-2 flex items-center justify-between">
+                                        <span class="text-xs font-semibold text-gray-600">Colore Sfondo Link (opzionale)</span>
+                                        <div class="flex items-center gap-1">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" type="color" class="w-6 h-6 rounded border-0 cursor-pointer">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" placeholder="Vuoto = tema" class="w-24 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-xs uppercase">
                                         </div>
                                     </div>
                                 </div>
@@ -185,6 +235,23 @@
 
                 <!-- SOCIALS TAB -->
                 <div v-show="currentTab === 'socials'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-4">Dimensione Icone Social</h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div @click="theme.socialIconSize = '20px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '20px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Piccole (20px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '26px'; debouncedUpdatePreview()" :class="!theme.socialIconSize || theme.socialIconSize === '26px' || theme.socialIconSize === '28px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Medie (26px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '32px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '32px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Grandi (32px)</span>
+                            </div>
+                            <div @click="theme.socialIconSize = '40px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '40px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
+                                <span class="text-xs font-semibold">Max (40px)</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <div class="flex justify-between items-center mb-6">
                             <div>
@@ -305,23 +372,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-4">Dimensione Icone Social</h2>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div @click="theme.socialIconSize = '20px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '20px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <span class="text-xs font-semibold">Piccole (20px)</span>
-                            </div>
-                            <div @click="theme.socialIconSize = '26px'; debouncedUpdatePreview()" :class="!theme.socialIconSize || theme.socialIconSize === '26px' || theme.socialIconSize === '28px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <span class="text-xs font-semibold">Medie (26px)</span>
-                            </div>
-                            <div @click="theme.socialIconSize = '32px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '32px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <span class="text-xs font-semibold">Grandi (32px)</span>
-                            </div>
-                            <div @click="theme.socialIconSize = '40px'; debouncedUpdatePreview()" :class="theme.socialIconSize === '40px' ? 'ring-2 ring-black bg-gray-50' : ''" class="cursor-pointer border rounded-xl p-3 text-center hover:bg-gray-50 transition-all flex flex-col items-center">
-                                <span class="text-xs font-semibold">Max (40px)</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold mb-6">Pulsanti</h2>
@@ -408,6 +459,38 @@
                     </div>
                 </div>
 
+                <!-- SECTIONS TAB -->
+                <div v-show="currentTab === 'sections'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold mb-2">🧩 Ordine e Posizionamento Sezioni</h2>
+                        <p class="text-sm text-gray-500 mb-6">Trascina le sezioni verso l'alto o verso il basso (drag and drop) oppure usa le frecce per riordinarle nella tua pagina ufficiale.</p>
+                        
+                        <div class="space-y-3" ref="sectionsList">
+                            <div v-for="(sec, index) in profile.sectionOrder" :key="sec" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between cursor-move shadow-sm hover:border-black transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="drag-handle p-2 text-gray-400 hover:text-black cursor-grab">
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>
+                                    </div>
+                                    <span class="font-bold text-sm text-gray-800">
+                                        {{ sec === 'profile' ? '👤 Foto profilo, Nome e Bio' :
+                                           sec === 'socials' ? '🌐 Icone Social' :
+                                           sec === 'business_mail' ? '💼 Pulsante Business Email' :
+                                           sec === 'links' ? '🔗 Elenco dei Link e Box in evidenza' : sec }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button @click="moveSectionUp(index)" :disabled="index === 0" class="p-1.5 text-gray-400 hover:text-black disabled:opacity-30" title="Sposta su">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                    </button>
+                                    <button @click="moveSectionDown(index)" :disabled="index === profile.sectionOrder.length - 1" class="p-1.5 text-gray-400 hover:text-black disabled:opacity-30" title="Sposta giù">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Right Column: Live Preview -->
@@ -428,6 +511,9 @@
         
         const { createApp } = Vue;
 
+        if (!initialData.profile.sectionOrder || !Array.isArray(initialData.profile.sectionOrder) || initialData.profile.sectionOrder.length === 0) {
+            initialData.profile.sectionOrder = ['profile', 'socials', 'business_mail', 'links'];
+        }
         createApp({
             data() {
                 return {
@@ -468,9 +554,52 @@
                             }
                         });
                     }
+                    if (this.$refs.sectionsList) {
+                        Sortable.create(this.$refs.sectionsList, {
+                            handle: '.drag-handle',
+                            animation: 150,
+                            onEnd: (evt) => {
+                                const item = this.profile.sectionOrder.splice(evt.oldIndex, 1)[0];
+                                this.profile.sectionOrder.splice(evt.newIndex, 0, item);
+                                this.debouncedUpdatePreview();
+                            }
+                        });
+                    }
                 });
             },
             methods: {
+                initSectionsSortable() {
+                    this.$nextTick(() => {
+                        if (this.$refs.sectionsList && !this._sectionsSortableInitialized) {
+                            this._sectionsSortableInitialized = true;
+                            Sortable.create(this.$refs.sectionsList, {
+                                handle: '.drag-handle',
+                                animation: 150,
+                                onEnd: (evt) => {
+                                    const item = this.profile.sectionOrder.splice(evt.oldIndex, 1)[0];
+                                    this.profile.sectionOrder.splice(evt.newIndex, 0, item);
+                                    this.debouncedUpdatePreview();
+                                }
+                            });
+                        }
+                    });
+                },
+                moveSectionUp(index) {
+                    if (index > 0) {
+                        const temp = this.profile.sectionOrder[index];
+                        this.profile.sectionOrder[index] = this.profile.sectionOrder[index - 1];
+                        this.profile.sectionOrder[index - 1] = temp;
+                        this.debouncedUpdatePreview();
+                    }
+                },
+                moveSectionDown(index) {
+                    if (index < this.profile.sectionOrder.length - 1) {
+                        const temp = this.profile.sectionOrder[index];
+                        this.profile.sectionOrder[index] = this.profile.sectionOrder[index + 1];
+                        this.profile.sectionOrder[index + 1] = temp;
+                        this.debouncedUpdatePreview();
+                    }
+                },
                 async uploadFile(event, callback) {
                     const file = event.target.files[0];
                     if (!file) return;
