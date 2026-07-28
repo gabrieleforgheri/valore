@@ -27,7 +27,7 @@
                         <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Links</button>
                         <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Socials</button>
                         <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
-                        <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
+                        <button @click="currentTab = 'stats'; initChart()" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
                         <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Sezioni</button>
                     </div>
                 </div>
@@ -46,7 +46,7 @@
                 <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Links</button>
                 <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Socials</button>
                 <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
-                <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
+                <button @click="currentTab = 'stats'; initChart()" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
                 <button @click="currentTab = 'sections'; initSectionsSortable()" :class="currentTab === 'sections' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Sezioni</button>
             </div>
         </nav>
@@ -587,6 +587,7 @@
 
     <script>
         const initialData = <%- JSON.stringify(data) %>;
+        const initialStats = <%- JSON.stringify(stats) %>;
         
         const { createApp } = Vue;
 
@@ -607,6 +608,8 @@
         createApp({
             data() {
                 const initialLinkGap = initialData.profile.linkGap !== undefined ? initialData.profile.linkGap : 14;
+                const startDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                const endDate = new Date().toISOString().split('T')[0];
                 return {
                     currentTab: 'links',
                     showMobilePreview: false,
@@ -617,14 +620,18 @@
                     },
                     links: initialData.links,
                     socials: initialData.socials || [],
+                    stats: initialStats || { totalVisits: 0, totalClicks: 0, socialClicks: [], linkClicks: [] },
                     saving: false,
                     previewTimeout: null,
-                    linkGapPreset: [8, 12, 16, 24].includes(initialLinkGap) ? String(initialLinkGap) : 'custom'
+                    linkGapPreset: [8, 12, 16, 24].includes(initialLinkGap) ? String(initialLinkGap) : 'custom',
+                    chartStartDate: startDate,
+                    chartEndDate: endDate,
+                    chartInstance: null,
+                    detailedChartData: []
                 }
             },
             mounted() {
                 this.$nextTick(() => {
-                    this.initChart();
                     if (this.$refs.linksList) {
                         Sortable.create(this.$refs.linksList, {
                             handle: '.drag-handle',
@@ -661,7 +668,7 @@
                 });
             },
             methods: {
-                async initChart() {
+                initChart() {
                     this.$nextTick(async () => {
                         await this.fetchChartData();
                     });
@@ -761,7 +768,6 @@
                 },
                 initSectionsSortable() {
                     this.$nextTick(() => {
-                    this.initChart();
                         if (this.$refs.sectionsList && !this._sectionsSortableInitialized) {
                             this._sectionsSortableInitialized = true;
                             Sortable.create(this.$refs.sectionsList, {
