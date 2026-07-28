@@ -171,28 +171,26 @@
                                     </button>
                                 </div>
 
-                                <!-- Options Grid (Compact Controls) -->
-                                <div class="pt-2 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <!-- Horizontal Inline Controls Bar (Ultra-Compact, No Sub-Cards) -->
+                                <div class="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                                     
                                     <!-- Image Action -->
-                                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                        <span class="font-semibold text-gray-600 text-xs">Immagine</span>
-                                        <div class="flex gap-1.5">
-                                            <label class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors">
-                                                <span>{{ link.thumbnail ? 'Modifica' : 'Carica' }}</span>
-                                                <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => { link.thumbnail = url; debouncedUpdatePreview(); })">
-                                            </label>
-                                            <button v-if="link.thumbnail" @click="link.thumbnail = ''; debouncedUpdatePreview()" type="button" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs transition-colors">Rimuovi</button>
-                                        </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-semibold text-gray-500">Immagine:</span>
+                                        <label class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg text-xs cursor-pointer transition-colors">
+                                            <span>{{ link.thumbnail ? 'Modifica' : 'Carica' }}</span>
+                                            <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => { link.thumbnail = url; debouncedUpdatePreview(); })">
+                                        </label>
+                                        <button v-if="link.thumbnail" @click="link.thumbnail = ''; debouncedUpdatePreview()" type="button" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg text-xs transition-colors">
+                                            Rimuovi
+                                        </button>
                                     </div>
 
-                                    <!-- Icon Selector Combobox -->
-                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <span class="font-semibold text-gray-600 text-xs">Icona</span>
-                                        </div>
-                                        <select v-model="link.iconChoice" @change="debouncedUpdatePreview" class="w-full p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none">
-                                            <option value="auto">Auto (Dalla piattaforma / URL)</option>
+                                    <!-- Icon Choice -->
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-semibold text-gray-500">Icona:</span>
+                                        <select v-model="link.iconChoice" @change="debouncedUpdatePreview" class="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none">
+                                            <option value="auto">Auto (URL)</option>
                                             <option value="instagram">Instagram</option>
                                             <option value="tiktok">TikTok</option>
                                             <option value="youtube">YouTube</option>
@@ -205,50 +203,45 @@
                                             <option value="twitch">Twitch</option>
                                             <option value="soundcloud">SoundCloud</option>
                                             <option value="apple">Apple Music</option>
-                                            <option value="custom">Icona Personalizzata...</option>
+                                            <option value="custom">Personalizzata...</option>
                                         </select>
-                                        <div v-if="link.iconChoice === 'custom'" class="flex gap-1 mt-2">
-                                            <input v-model="link.customIcon" @input="debouncedUpdatePreview" placeholder="URL icona..." class="flex-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs">
-                                            <label class="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded text-xs cursor-pointer shrink-0">
+                                        <template v-if="link.iconChoice === 'custom'">
+                                            <input v-model="link.customIcon" @input="debouncedUpdatePreview" placeholder="URL..." class="w-24 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-xs">
+                                            <label class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded text-xs cursor-pointer shrink-0">
                                                 <span>Carica</span>
                                                 <input type="file" accept="image/*" class="hidden" @change="e => uploadFile(e, url => { link.customIcon = url; debouncedUpdatePreview(); })">
                                             </label>
-                                        </div>
+                                        </template>
                                     </div>
 
-                                    <!-- Featured Box Toggle & Size -->
-                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-semibold text-gray-600 text-xs">⭐ In Evidenza</span>
-                                            <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-black focus:ring-black w-4 h-4 cursor-pointer">
-                                        </div>
-                                        <div v-if="link.featured" class="mt-1.5">
-                                            <select v-model="link.featuredSize" @change="debouncedUpdatePreview" class="w-full p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700">
-                                                <option value="1">1 - Compatto (Orizzontale)</option>
-                                                <option value="2">2 - Banner Medio</option>
-                                                <option value="3">3 - Standard (16:9)</option>
-                                                <option value="4">4 - Grande (4:3)</option>
-                                                <option value="5">5 - Quadrato (1:1)</option>
-                                            </select>
-                                        </div>
+                                    <!-- Featured Toggle & Size -->
+                                    <div class="flex items-center gap-1.5">
+                                        <label class="flex items-center gap-1 cursor-pointer">
+                                            <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer">
+                                            <span class="font-semibold text-gray-700">In Evidenza</span>
+                                        </label>
+                                        <select v-if="link.featured" v-model="link.featuredSize" @change="debouncedUpdatePreview" class="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700">
+                                            <option value="1">Orizzontale</option>
+                                            <option value="2">Banner Medio</option>
+                                            <option value="3">Standard (16:9)</option>
+                                            <option value="4">Grande (4:3)</option>
+                                            <option value="5">Quadrato (1:1)</option>
+                                        </select>
                                     </div>
 
-                                    <!-- Link Background / Transparent Toggle -->
-                                    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col justify-between">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-semibold text-gray-600 text-xs">Sfondo Trasparente</span>
+                                    <!-- Transparent Sfondo Toggle & Color -->
+                                    <div class="flex items-center gap-1.5">
+                                        <label class="flex items-center gap-1 cursor-pointer">
                                             <input type="checkbox" v-model="link.transparent" @change="debouncedUpdatePreview" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer">
-                                        </div>
-                                        <div v-if="!link.transparent" class="flex items-center gap-2 mt-1.5">
-                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" type="color" class="w-6 h-6 rounded border-0 cursor-pointer">
-                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" placeholder="Colore Sfondo" class="flex-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs uppercase">
+                                            <span class="font-semibold text-gray-700">Trasparente</span>
+                                        </label>
+                                        <div v-if="!link.transparent" class="flex items-center gap-1">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" type="color" class="w-5 h-5 rounded border-0 cursor-pointer p-0">
+                                            <input v-model="link.bgColor" @input="debouncedUpdatePreview" placeholder="#colore" class="w-16 px-1.5 py-0.5 bg-gray-50 border border-gray-200 rounded text-[11px] uppercase">
                                         </div>
                                     </div>
 
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                </div></div>
                 </div>
 
                 <!-- SOCIALS TAB -->
@@ -344,7 +337,22 @@
                             </div>
                         </div>
 
-                        <div v-if="theme.bgType === 'gradient'" class="grid grid-cols-2 gap-4 pt-2">
+                        <div v-if="theme.bgType === 'gradient'" class="space-y-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Direzione Sfumatura</label>
+                                <select v-model="theme.gradientDirection" @change="debouncedUpdatePreview" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none">
+                                    <option value="to bottom">Dall'alto verso il basso (Verticale)</option>
+                                    <option value="to top">Dal basso verso l'alto</option>
+                                    <option value="to right">Da sinistra a destra (Orizzontale)</option>
+                                    <option value="to left">Da destra a sinistra</option>
+                                    <option value="to bottom right">In diagonale (Alto sx ➔ Basso dx)</option>
+                                    <option value="to bottom left">In diagonale (Alto dx ➔ Basso sx)</option>
+                                    <option value="45deg">45 Gradi</option>
+                                    <option value="135deg">135 Gradi</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Colore Iniziale (Superiore)</label>
                                 <div class="flex items-center gap-2">
