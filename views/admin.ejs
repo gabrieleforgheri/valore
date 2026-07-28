@@ -24,6 +24,7 @@
                     <img :src="'/' + profile.image" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100">
                     <div class="hidden sm:flex gap-1">
                         <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Links</button>
+                        <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Socials</button>
                         <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Aspetto</button>
                         <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="px-3 py-5 font-semibold text-sm transition-colors">Statistiche</button>
                     </div>
@@ -40,6 +41,7 @@
             <!-- Mobile Tabs -->
             <div class="sm:hidden flex border-t border-gray-100">
                 <button @click="currentTab = 'links'" :class="currentTab === 'links' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Links</button>
+                <button @click="currentTab = 'socials'" :class="currentTab === 'socials' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Socials</button>
                 <button @click="currentTab = 'appearance'" :class="currentTab === 'appearance' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Aspetto</button>
                 <button @click="currentTab = 'stats'" :class="currentTab === 'stats' ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'" class="flex-1 py-3 font-semibold text-sm">Statistiche</button>
             </div>
@@ -108,6 +110,76 @@
                                             <input type="checkbox" v-model="link.featured" @change="debouncedUpdatePreview" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all border-gray-300"/>
                                             <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SOCIALS TAB -->
+                <div v-show="currentTab === 'socials'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-lg font-bold">Social Links</h2>
+                                <p class="text-xs text-gray-500 mt-0.5">Aggiungi icone social sotto l'intestazione del profilo</p>
+                            </div>
+                            <button @click="addSocial" class="px-4 py-2 bg-black hover:bg-gray-800 text-white font-semibold rounded-full text-sm transition-colors shadow-sm flex items-center gap-2">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Aggiungi Social
+                            </button>
+                        </div>
+
+                        <div v-if="!socials || socials.length === 0" class="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            Nessun social link presente. Clicca "Aggiungi Social" per crearne uno.
+                        </div>
+
+                        <div v-else class="space-y-4">
+                            <div v-for="(social, index) in socials" :key="social.id" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex gap-4 transition-all relative group hover:border-gray-300">
+                                <!-- Move buttons -->
+                                <div class="flex flex-col justify-center items-center gap-1 text-gray-300">
+                                    <button @click="moveUpSocial(index)" :disabled="index === 0" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                    <button @click="moveDownSocial(index)" :disabled="index === socials.length - 1" class="hover:text-black disabled:opacity-30 p-1"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                </div>
+
+                                <!-- Social form -->
+                                <div class="flex-1 space-y-3">
+                                    <div class="flex gap-3">
+                                        <div class="w-1/3">
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">Piattaforma</label>
+                                            <select v-model="social.platform" @change="debouncedUpdatePreview" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                                <option value="instagram">Instagram</option>
+                                                <option value="tiktok">TikTok</option>
+                                                <option value="youtube">YouTube</option>
+                                                <option value="spotify">Spotify</option>
+                                                <option value="x">X / Twitter</option>
+                                                <option value="facebook">Facebook</option>
+                                                <option value="linkedin">LinkedIn</option>
+                                                <option value="github">GitHub</option>
+                                                <option value="discord">Discord</option>
+                                                <option value="telegram">Telegram</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                                <option value="twitch">Twitch</option>
+                                                <option value="soundcloud">SoundCloud</option>
+                                                <option value="apple">Apple Music</option>
+                                                <option value="amazon">Amazon Music</option>
+                                                <option value="custom">Personalizzato (Icona personalizzata)</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">URL Profilo</label>
+                                            <input v-model="social.url" @input="debouncedUpdatePreview" placeholder="https://..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button @click="removeSocial(index)" class="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div v-if="social.platform === 'custom'" class="pt-2 border-t border-gray-100">
+                                        <label class="block text-xs font-semibold text-gray-500 mb-1">URL o Base64 Icona Personalizzata (consigliato 16x16 o 32x32)</label>
+                                        <input v-model="social.icon" @input="debouncedUpdatePreview" placeholder="https://... oppure data:image/png;base64,..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500">
                                     </div>
                                 </div>
                             </div>
@@ -273,11 +345,43 @@
                         fontColor: '#ffffff', btnBg: 'transparent', btnText: '#fce7ff', btnRadius: '0px'
                     },
                     links: initialData.links,
+                    socials: initialData.socials || [],
                     saving: false,
                     previewTimeout: null
                 }
             },
             methods: {
+                addSocial() {
+                    this.socials.push({
+                        id: Date.now().toString(),
+                        platform: 'instagram',
+                        url: 'https://instagram.com/',
+                        icon: ''
+                    });
+                    this.debouncedUpdatePreview();
+                },
+                removeSocial(index) {
+                    if(confirm('Sei sicuro di voler eliminare questo social?')) {
+                        this.socials.splice(index, 1);
+                        this.debouncedUpdatePreview();
+                    }
+                },
+                moveUpSocial(index) {
+                    if (index > 0) {
+                        const temp = this.socials[index];
+                        this.socials[index] = this.socials[index - 1];
+                        this.socials[index - 1] = temp;
+                        this.debouncedUpdatePreview();
+                    }
+                },
+                moveDownSocial(index) {
+                    if (index < this.socials.length - 1) {
+                        const temp = this.socials[index];
+                        this.socials[index] = this.socials[index + 1];
+                        this.socials[index + 1] = temp;
+                        this.debouncedUpdatePreview();
+                    }
+                },
                 addLink() {
                     this.links.unshift({
                         id: Date.now().toString(),
@@ -324,7 +428,8 @@
                             body: JSON.stringify({
                                 profile: this.profile,
                                 theme: this.theme,
-                                links: this.links
+                                links: this.links,
+                                socials: this.socials
                             })
                         });
                         if (res.ok) {
@@ -344,7 +449,8 @@
                             body: JSON.stringify({
                                 profile: this.profile,
                                 theme: this.theme,
-                                links: this.links
+                                links: this.links,
+                                socials: this.socials
                             })
                         });
                         if (res.ok) {

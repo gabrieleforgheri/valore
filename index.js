@@ -56,6 +56,13 @@ function getData() {
             fontFamily: 'IBM Plex Sans'
         };
     }
+    if (!data.socials) {
+        data.socials = [
+            { id: "1", platform: "youtube", url: "https://www.youtube.com/@rarestValore" },
+            { id: "2", platform: "tiktok", url: "https://tiktok.com/@rarestvalore" },
+            { id: "3", platform: "spotify", url: "https://open.spotify.com/intl-it/artist/3vO9rAZ7FTlGRwMKXtAerh?si=7Fsg43CTSrmze-xSQ5jTag" }
+        ];
+    }
     return data;
 }
 
