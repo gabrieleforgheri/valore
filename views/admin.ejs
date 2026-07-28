@@ -553,7 +553,7 @@
                         <p class="text-sm text-gray-500 mb-6">Trascina le sezioni (drag and drop) o usa le frecce per stabilire l'ordine dei blocchi nella pagina.</p>
                         
                         <div class="space-y-3" ref="sectionsList">
-                            <div v-for="(sec, index) in profile.sectionOrder" :key="sec" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between cursor-move shadow-sm hover:border-black transition-all">
+                            <div v-for="(sec, index) in (profile.sectionOrder && profile.sectionOrder.length ? profile.sectionOrder : ['profile', 'socials', 'business_mail', 'links'])" :key="sec" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex items-center justify-between cursor-move shadow-sm hover:border-black transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="drag-handle p-2 text-gray-400 hover:text-black cursor-grab">
                                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>
@@ -791,18 +791,18 @@
                     });
                 },
                 moveSectionUp(index) {
-                    if (index > 0) {
-                        const temp = this.profile.sectionOrder[index];
-                        this.profile.sectionOrder[index] = this.profile.sectionOrder[index - 1];
-                        this.profile.sectionOrder[index - 1] = temp;
+                    if (index > 0 && this.profile.sectionOrder) {
+                        const item = this.profile.sectionOrder.splice(index, 1)[0];
+                        this.profile.sectionOrder.splice(index - 1, 0, item);
+                        this.profile.sectionOrder = [...this.profile.sectionOrder];
                         this.debouncedUpdatePreview();
                     }
                 },
                 moveSectionDown(index) {
-                    if (index < this.profile.sectionOrder.length - 1) {
-                        const temp = this.profile.sectionOrder[index];
-                        this.profile.sectionOrder[index] = this.profile.sectionOrder[index + 1];
-                        this.profile.sectionOrder[index + 1] = temp;
+                    if (this.profile.sectionOrder && index < this.profile.sectionOrder.length - 1) {
+                        const item = this.profile.sectionOrder.splice(index, 1)[0];
+                        this.profile.sectionOrder.splice(index + 1, 0, item);
+                        this.profile.sectionOrder = [...this.profile.sectionOrder];
                         this.debouncedUpdatePreview();
                     }
                 },
