@@ -171,8 +171,21 @@
 </div>
 <%  } else if (secName === 'business_mail' && profile.showBusinessMail !== false) { %>
 <% if (profile.businessMail) { %>
+<%
+  let bmBg = 'rgba(255, 255, 255, 0.15)';
+  if (profile.businessMailTransparent) {
+    bmBg = 'transparent';
+  } else {
+    const bmHex = (profile.businessMailColor || '#000000').replace('#', '');
+    const bmR = parseInt(bmHex.substring(0, 2), 16) || 0;
+    const bmG = parseInt(bmHex.substring(2, 4), 16) || 0;
+    const bmB = parseInt(bmHex.substring(4, 6), 16) || 0;
+    const bmA = (profile.businessMailOpacity !== undefined ? profile.businessMailOpacity : 100) / 100;
+    bmBg = `rgba(${bmR}, ${bmG}, ${bmB}, ${bmA})`;
+  }
+%>
 <div data-section="business_mail" class="flex justify-center w-full" style="<%= mbStyle %>">
-  <a href="mailto:<%= profile.businessMail %>" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 shadow-md hover:scale-105 active:scale-95 border border-white/20 backdrop-blur-md" style="background-color: <%= profile.businessMailTransparent ? 'transparent !important' : (profile.businessMailColor || 'rgba(255, 255, 255, 0.15)') %>; color: <%= profile.businessMailTextColor || theme.fontColor || '#ffffff' %>; <%= profile.businessMailTransparent ? 'border: 1px solid rgba(255,255,255,0.4);' : '' %>">
+  <a href="mailto:<%= profile.businessMail %>" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 shadow-md hover:scale-105 active:scale-95 border border-white/20 backdrop-blur-md" style="background-color: <%= bmBg %>; color: <%= profile.businessMailTextColor || theme.fontColor || '#ffffff' %>; <%= profile.businessMailTransparent ? 'border: 1px solid rgba(255,255,255,0.4);' : '' %>">
     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
     <span><%= profile.businessMailTitle || 'Contatto Business / Partnership' %></span>
   </a>
