@@ -85,7 +85,6 @@ app.get('/', (req, res) => {
 
 // Analytics Endpoints
 app.post('/api/track/visit', (req, res) => {
-    if (req.session && req.session.loggedIn) return res.json({ success: true, visitId: null });
     try {
         const stmt = db.prepare('INSERT INTO visits (ip, userAgent) VALUES (?, ?)');
         const info = stmt.run(req.ip, req.get('User-Agent'));
@@ -96,7 +95,6 @@ app.post('/api/track/visit', (req, res) => {
 });
 
 app.post('/api/track/ping', (req, res) => {
-    if (req.session && req.session.loggedIn) return res.json({ success: true });
     try {
         const { visitId, timeSpent } = req.body;
         if (visitId) {
@@ -110,7 +108,6 @@ app.post('/api/track/ping', (req, res) => {
 });
 
 app.post('/api/track/click', (req, res) => {
-    if (req.session && req.session.loggedIn) return res.json({ success: true });
     try {
         const { linkUrl, linkTitle, visitId } = req.body;
         const stmt = db.prepare('INSERT INTO clicks (linkUrl, linkTitle, visitId) VALUES (?, ?, ?)');
