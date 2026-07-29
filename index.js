@@ -268,6 +268,63 @@ app.get('/admin/api/analytics', (req, res) => {
     res.json({ success: true, startDate, endDate, dailyClicks, detailedClicks });
 });
 
+// Live Stats API (for real-time polling)
+app.get('/admin/api/stats', (req, res) => {
+    if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: 'Unauthorized' });
+
+    const totalVisits = db.prepare('SELECT COUNT(*) as count FROM visits').get().count;
+    const totalClicks = db.prepare('SELECT COUNT(*) as count FROM clicks').get().count;
+
+    const currentData = getData();
+
+    const socialClicksMap = {};
+    if (currentData.socials && Array.isArray(currentData.socials)) {
+        currentData.socials.forEach(s => {
+            socialClicksMap[s.id] = { id: s.id, platform: s.platform, name: (s.platform || 'social').toUpperCase(), count: 0 };
+        });
+    }
+
+    const linkClicksMap = {};
+    if (currentData.links && Array.isArray(currentData.links)) {
+        currentData.links.forEach(l => {
+            linkClicksMap[l.id] = { id: l.id, title: l.title || 'Link', count: 0 };
+        });
+    }
+
+    const clickCountsRaw = db.prepare('SELECT linkTitle, linkUrl, COUNT(*) as count FROM clicks GROUP BY linkTitle, linkUrl').all();
+    clickCountsRaw.forEach(row => {
+        const rawTitle = (row.linkTitle || '').trim();
+        const rawUrl = (row.linkUrl || '').trim().replace(/\/$/, '');
+
+        if (currentData.socials) {
+            currentData.socials.forEach(s => {
+                const sUrl = (s.url || '').trim().replace(/\/$/, '');
+                const platMatch = `Social: ${s.platform.toUpperCase()}`;
+                if ((sUrl && rawUrl && sUrl.toLowerCase() === rawUrl.toLowerCase()) || rawTitle.toUpperCase() === platMatch.toUpperCase()) {
+                    if (socialClicksMap[s.id]) socialClicksMap[s.id].count += row.count;
+                }
+            });
+        }
+
+        if (currentData.links) {
+            currentData.links.forEach(l => {
+                const lUrl = (l.url || '').trim().replace(/\/$/, '');
+                if ((lUrl && rawUrl && lUrl.toLowerCase() === rawUrl.toLowerCase()) || (l.title && rawTitle.toLowerCase() === l.title.toLowerCase())) {
+                    if (linkClicksMap[l.id]) linkClicksMap[l.id].count += row.count;
+                }
+            });
+        }
+    });
+
+    res.json({
+        success: true,
+        totalVisits,
+        totalClicks,
+        socialClicks: Object.values(socialClicksMap),
+        linkClicks: Object.values(linkClicksMap)
+    });
+});
+
 app.post('/admin/save', (req, res) => {
     if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
     saveData(req.body);

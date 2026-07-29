@@ -641,7 +641,8 @@
                     chartStartDate: startDate,
                     chartEndDate: endDate,
                     chartInstance: null,
-                    detailedChartData: []
+                    detailedChartData: [],
+                    _statsInterval: null
                 }
             },
             mounted() {
@@ -681,11 +682,46 @@
                     }
                 });
             },
+            watch: {
+                currentTab(newTab, oldTab) {
+                    if (newTab !== 'stats' && this._statsInterval) {
+                        clearInterval(this._statsInterval);
+                        this._statsInterval = null;
+                    }
+                }
+            },
+            beforeUnmount() {
+                if (this._statsInterval) {
+                    clearInterval(this._statsInterval);
+                    this._statsInterval = null;
+                }
+            },
             methods: {
                 initChart() {
                     this.$nextTick(async () => {
                         await this.fetchChartData();
+                        await this.fetchLiveStats();
+                        // Start real-time polling (every 5s)
+                        if (this._statsInterval) clearInterval(this._statsInterval);
+                        this._statsInterval = setInterval(() => {
+                            this.fetchLiveStats();
+                            this.fetchChartData();
+                        }, 5000);
                     });
+                },
+                async fetchLiveStats() {
+                    try {
+                        const res = await fetch('/admin/api/stats');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.stats.totalVisits = data.totalVisits;
+                            this.stats.totalClicks = data.totalClicks;
+                            this.stats.socialClicks = data.socialClicks;
+                            this.stats.linkClicks = data.linkClicks;
+                        }
+                    } catch(e) {
+                        console.error('Error fetching live stats:', e);
+                    }
                 },
                 async fetchChartData() {
                     const start = new Date(this.chartStartDate);
