@@ -1,3 +1,14 @@
 node_modules/
 .DS_Store
+
+# Live instance state — belongs to the running deployment, not to the repo.
+# A fresh checkout is seeded from data.default.json on first start.
+data.json
+data.json.tmp
 stats.db
+stats.db-*
+secrets/
+
+# Pelican / npm scratch
+.cache/
+.npm/
