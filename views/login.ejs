@@ -3,27 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Valore Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login &middot; <%= profile.name || 'Admin' %></title>
+    <link rel="icon" href="<%= profile.favicon || 'images/valore-logo.png' %>">
+    <!-- Was cdn.tailwindcss.com, which left this page unstyled whenever the CDN
+         was unreachable. The login form needs a handful of rules; they are here. -->
     <style>
-        body { background: linear-gradient(135deg, #0B152C 0%, #4E769B 100%); }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #fff;
+            /* Follows the page's own theme instead of a hardcoded blue gradient. */
+            background: linear-gradient(135deg, <%= theme.bgColor1 || '#0B152C' %> 0%, <%= theme.bgColor2 || '#4E769B' %> 100%);
+            background-attachment: fixed;
+        }
+        .card {
+            width: 100%;
+            max-width: 360px;
+            padding: 32px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .avatar {
+            display: block;
+            width: 80px; height: 80px;
+            margin: 0 auto 24px;
+            border-radius: 18px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        h1 { margin: 0 0 24px; font-size: 22px; text-align: center; }
+        label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        input {
+            width: 100%;
+            padding: 10px 14px;
+            font: inherit;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            border-radius: 10px;
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.55); }
+        input:focus { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 1px; }
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 11px 16px;
+            font: inherit;
+            font-weight: 600;
+            color: #fff;
+            background: #000;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:hover { background: #1f2937; }
+        /* Wrong passwords used to redirect back with no explanation at all. */
+        .error {
+            margin: 0 0 16px;
+            padding: 10px 14px;
+            font-size: 13px;
+            border-radius: 10px;
+            background: rgba(220, 38, 38, 0.25);
+            border: 1px solid rgba(248, 113, 113, 0.5);
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center font-sans text-white">
-    <div class="bg-white/10 p-8 rounded-2xl shadow-xl backdrop-blur-md w-full max-w-sm border border-white/20">
-        <div class="flex justify-center mb-6">
-            <img src="/images/30254ecc-d606-4323-a460-46d8c30f0062_FotoProfiloFinale.png" class="w-20 h-20 rounded-2xl border-2 border-white/50 shadow-lg object-cover">
-        </div>
-        <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
-        <form action="/admin/login" method="POST" class="flex flex-col gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Password</label>
-                <input type="password" name="password" required class="w-full px-4 py-2 bg-black/20 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 text-white placeholder-gray-300" placeholder="Inserisci password...">
-            </div>
-            <button type="submit" class="w-full mt-2 bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-lg">
-                Entra
-            </button>
+<body>
+    <main class="card">
+        <% if (profile.image) { %>
+            <img class="avatar" src="/<%= profile.image.replace(/^\//, '') %>" alt="">
+        <% } %>
+        <h1>Accesso amministratore</h1>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error" role="alert">
+                <%= error === 'locked'
+                    ? 'Troppi tentativi falliti. Riprova tra qualche minuto.'
+                    : 'Password errata. Riprova.' %>
+            </p>
+        <% } %>
+        <form action="/admin/login" method="POST">
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" required autofocus
+                   autocomplete="current-password" placeholder="Inserisci la password">
+            <button type="submit">Entra</button>
         </form>
-    </div>
+    </main>
 </body>
 </html>
