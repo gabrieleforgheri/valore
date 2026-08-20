@@ -66,13 +66,24 @@
             </div>
         </nav>
 
-        <div class="max-w-[1400px] mx-auto px-4 mt-8 flex flex-col md:flex-row gap-8 items-start relative">
-            
-            <!-- Left Column: Editor -->
-            <div class="w-full md:w-[55%] lg:w-[60%] xl:w-[65%] space-y-6">
+        <div class="max-w-[1400px] xl:max-w-[1680px] mx-auto px-4 mt-8 flex flex-col md:flex-row gap-8 items-start relative">
+
+            <!-- Far Left Column: the link roster. Only wide screens have the room
+                 for a third column, so below xl the same panel is rendered at the
+                 top of the Links tab instead — same component, no duplicated markup. -->
+            <div v-show="currentTab === 'links'" class="hidden xl:block xl:w-[250px] shrink-0 sticky top-20">
+                <links-overview :links="links" @toggle="toggleLink" @remove="removeLink" @focus="focusLink"></links-overview>
+            </div>
+
+            <!-- Middle Column: Editor -->
+            <div class="w-full md:w-[55%] lg:w-[60%] xl:flex-1 xl:min-w-0 space-y-6">
                 
                 <!-- LINKS TAB -->
                 <div v-show="currentTab === 'links'" class="space-y-6">
+                    <div class="xl:hidden">
+                        <links-overview :links="links" @toggle="toggleLink" @remove="removeLink" @focus="focusLink"></links-overview>
+                    </div>
+
                     <!-- Profile Header Block -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <h2 class="text-lg font-bold mb-4">Profilo</h2>
@@ -198,20 +209,14 @@
                         <div class="space-y-3" ref="linksList">
                             <div v-for="(link, index) in links" :key="link.id" :class="link.enabled === false ? 'bg-gray-50 border-dashed border-gray-300' : 'bg-white border-gray-200 hover:border-gray-300'" class="p-3.5 rounded-2xl border shadow-sm transition-all relative group space-y-2.5">
                                 
-                                <!-- Header Row: Drag, Visibility, Title, Delete -->
+                                <!-- Header Row: Drag and Title. Hiding and deleting live in
+                                     the roster panel, not here. -->
                                 <div class="flex items-center gap-2">
                                     <div class="drag-handle p-1 text-gray-400 hover:text-black rounded cursor-grab active:cursor-grabbing shrink-0" title="Trascina per riordinare">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                                     </div>
-                                    <button @click="toggleLink(link)" type="button" :title="link.enabled === false ? 'Link nascosto — clicca per mostrarlo' : 'Link visibile — clicca per nasconderlo'" :class="link.enabled === false ? 'text-gray-400 hover:text-purple-600' : 'text-purple-600 hover:text-gray-500'" class="p-1.5 transition-colors shrink-0">
-                                        <svg v-if="link.enabled !== false" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                        <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
-                                    </button>
                                     <input v-model="link.title" @input="debouncedUpdatePreview" placeholder="Titolo del Link" :class="link.enabled === false ? 'text-gray-400 line-through' : ''" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-1 focus:ring-purple-500">
                                     <span v-if="link.enabled === false" class="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0">Nascosto</span>
-                                    <button @click="removeLink(index)" class="text-gray-400 hover:text-red-500 p-1.5 transition-colors shrink-0" title="Elimina link">
-                                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
                                 </div>
                                 <p v-if="link.enabled === false" class="text-[11px] text-gray-500 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-1.5 leading-snug">
                                     Non compare sulla pagina pubblica, ma resta salvato e <strong>continua a conservare le sue statistiche</strong>. Usa questo invece di riciclare un link esistente.
@@ -897,6 +902,61 @@
             '#7c3aed', '#65a30d', '#db2777', '#0d9488', '#ea580c', '#4f46e5'
         ];
 
+        // One roster, rendered twice: as a sticky third column on wide screens and
+        // as a card at the top of the Links tab below xl. A component keeps the
+        // markup in one place instead of two copies drifting apart.
+        const LinksOverview = {
+            props: { links: { type: Array, required: true } },
+            emits: ['toggle', 'remove', 'focus'],
+            computed: {
+                visibleCount() { return this.links.filter(l => l.enabled !== false).length; }
+            },
+            template: `
+                <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex items-baseline justify-between gap-2 mb-3">
+                        <h2 class="text-sm font-bold">I tuoi link</h2>
+                        <span class="text-[10px] font-mono font-bold text-gray-400 shrink-0">{{ visibleCount }}/{{ links.length }} visibili</span>
+                    </div>
+
+                    <p v-if="!links.length" class="text-xs text-gray-400 italic bg-gray-50 rounded-2xl p-3 text-center">
+                        Nessun link. Usa "+ Aggiungi Link".
+                    </p>
+
+                    <ul v-else class="space-y-1.5 max-h-[calc(100vh-13rem)] overflow-y-auto pr-1">
+                        <li v-for="(link, index) in links" :key="link.id"
+                            :class="link.enabled === false ? 'bg-gray-50 border-dashed border-gray-300' : 'bg-white border-gray-200 hover:border-gray-300'"
+                            class="flex items-center gap-1 pl-2.5 pr-1 py-1.5 border rounded-xl transition-colors">
+                            <button type="button" @click="$emit('focus', index)"
+                                    :class="link.enabled === false ? 'text-gray-400 line-through' : 'text-gray-800'"
+                                    class="flex-1 min-w-0 text-left text-xs font-semibold truncate hover:text-purple-700"
+                                    :title="(link.title || 'Senza titolo') + ' — vai alla scheda'">
+                                {{ link.title || 'Senza titolo' }}
+                            </button>
+
+                            <button type="button" @click="$emit('toggle', link)"
+                                    :title="link.enabled === false ? 'Nascosto — clicca per mostrarlo' : 'Visibile — clicca per nasconderlo'"
+                                    :aria-label="link.enabled === false ? 'Mostra il link' : 'Nascondi il link'"
+                                    :class="link.enabled === false ? 'text-gray-400 hover:text-purple-600' : 'text-purple-600 hover:text-gray-500'"
+                                    class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
+                                <svg v-if="link.enabled !== false" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <svg v-else width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                            </button>
+
+                            <button type="button" @click="$emit('remove', index)"
+                                    title="Elimina il link" aria-label="Elimina il link"
+                                    class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <p class="text-[10px] text-gray-400 mt-3 leading-snug">
+                        L'occhio nasconde il link dalla pagina pubblica <strong>senza perderne le statistiche</strong>. Il cestino lo elimina davvero.
+                    </p>
+                </div>
+            `
+        };
+
         const app = createApp({
             data() {
                 const initialLinkGap = initialData.profile.linkGap !== undefined ? initialData.profile.linkGap : 14;
@@ -1404,6 +1464,20 @@
                 // Hiding instead of deleting: the entry stays in data.json, so the
                 // clicks recorded against its URL and title keep being attributed
                 // to it. Repurposing an existing link is what loses the history.
+                // Clicking a title in the roster jumps to its card, which is the
+                // only way the two panels stay usable together once the list is
+                // longer than a screen.
+                focusLink(index) {
+                    this.currentTab = 'links';
+                    this.$nextTick(() => {
+                        const list = this.$refs.linksList;
+                        const card = list && list.children[index];
+                        if (!card) return;
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.classList.add('ring-2', 'ring-purple-400');
+                        setTimeout(() => card.classList.remove('ring-2', 'ring-purple-400'), 1200);
+                    });
+                },
                 toggleLink(link) {
                     link.enabled = link.enabled === false;
                     this.debouncedUpdatePreview();
@@ -1614,6 +1688,8 @@
                 }
             }
         });
+
+        app.component('links-overview', LinksOverview);
 
         const vm = app.mount('#app');
 
