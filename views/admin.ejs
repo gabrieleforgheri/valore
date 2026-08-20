@@ -224,11 +224,28 @@
 
                                 <!-- Subtitle Field + Auto-detect -->
                                 <div class="flex gap-2 items-center">
-                                    <input v-model="link.subtitle" @input="debouncedUpdatePreview" placeholder="Sottotitolo (opzionale)" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                    <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-xl text-xs transition-colors shrink-0 flex items-center gap-1" title="Rileva dati in automatico">
+                                    <input v-model="link.subtitle" @input="link.autoSubtitle = ''; debouncedUpdatePreview()" placeholder="Sottotitolo (opzionale)" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                    <button @click="fetchLinkMeta(link)" type="button" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-xl text-xs transition-colors shrink-0 flex items-center gap-1" title="Svuota il sottotitolo e mostra accanto all'icona il dato rilevato dal link">
                                         <span>✨ Auto-rileva</span>
                                     </button>
                                 </div>
+                                <!-- Exactly what will appear beside the icon, whichever of the three cases applies -->
+                                <p class="text-[10px] text-gray-400 flex items-center gap-1.5 -mt-1">
+                                    <span class="font-semibold text-gray-500 shrink-0">Accanto all'icona:</span>
+                                    <template v-if="link.subtitle">
+                                        <span class="text-gray-700 font-semibold truncate">{{ link.subtitle }}</span>
+                                        <span class="shrink-0">(scritto a mano)</span>
+                                    </template>
+                                    <template v-else-if="link.autoSubtitle">
+                                        <span class="text-purple-700 font-semibold truncate">{{ link.autoSubtitle }}</span>
+                                        <span class="shrink-0">(rilevato)</span>
+                                        <button @click="link.autoSubtitle = ''; debouncedUpdatePreview()" type="button" class="shrink-0 font-bold text-gray-400 hover:text-black uppercase">✕</button>
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-gray-600 truncate">{{ platformLabelFor(link) }} · {{ profile.name || 'Valore' }}</span>
+                                        <span class="shrink-0">(predefinito)</span>
+                                    </template>
+                                </p>
 
                                 <!-- Horizontal Inline Controls Bar (Ultra-Compact, No Sub-Cards) -->
                                 <div class="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
@@ -870,6 +887,7 @@
                 // Everything saved before the visibility switch existed was visible.
                 if (l.enabled === undefined) l.enabled = true;
                 if (l.fontSize === undefined) l.fontSize = '';
+                if (l.autoSubtitle === undefined) l.autoSubtitle = '';
             });
         }
 
@@ -1396,6 +1414,7 @@
                         title: 'Nuovo Link',
                         url: 'https://',
                         subtitle: '',
+                        autoSubtitle: '',
                         enabled: true,
                         fontSize: '',
                         featured: false,
@@ -1417,6 +1436,43 @@
                         this.debouncedUpdatePreview();
                     }
                 },
+                // The detected value is deliberately NOT written into the subtitle
+                // box. The box means "I typed this myself", and a value sitting in
+                // it used to be printed *in addition to* the automatic caption, so
+                // a hand-written "OCEAN DRIVE - Valore" came out as
+                // "Spotify · OCEAN DRIVE - Valore". Keeping the two apart is what
+                // lets the page show one or the other, never both.
+                applyDetectedSubtitle(link, detected) {
+                    link.autoSubtitle = String(detected || '').trim();
+                    link.subtitle = '';
+                    this.debouncedUpdatePreview();
+                },
+
+                // Mirrors the platform sniffing in views/index.ejs, only far enough
+                // to name the default caption in the editor.
+                platformLabelFor(link) {
+                    const choice = link.iconChoice && link.iconChoice !== 'auto' ? link.iconChoice : null;
+                    const NAMES = {
+                        instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', spotify: 'Spotify',
+                        x: 'X', facebook: 'Facebook', linkedin: 'LinkedIn', github: 'GitHub',
+                        discord: 'Discord', twitch: 'Twitch', soundcloud: 'SoundCloud', apple: 'Apple Music'
+                    };
+                    if (choice && NAMES[choice]) return NAMES[choice];
+                    const u = String(link.url || '').toLowerCase();
+                    const RULES = [
+                        ['instagram.com', 'Instagram'], ['tiktok.com', 'TikTok'],
+                        ['youtube.com', 'YouTube'], ['youtu.be', 'YouTube'],
+                        ['spotify.com', 'Spotify'], ['twitter.com', 'X'], ['x.com', 'X'],
+                        ['facebook.com', 'Facebook'], ['fb.com', 'Facebook'], ['linkedin.com', 'LinkedIn'],
+                        ['github.com', 'GitHub'], ['discord.gg', 'Discord'], ['discord.com', 'Discord'],
+                        ['twitch.tv', 'Twitch'], ['soundcloud.com', 'SoundCloud'],
+                        ['music.apple.com', 'Apple Music'], ['t.me', 'Telegram'],
+                        ['wa.me', 'WhatsApp'], ['whatsapp.com', 'WhatsApp']
+                    ];
+                    for (const [needle, name] of RULES) if (u.includes(needle)) return name;
+                    try { return new URL(link.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Link'; }
+                },
+
                 async fetchLinkMeta(link) {
                     if (!link.url || link.url === 'https://') return alert("Inserisci prima un URL valido.");
                     let detected = null;
@@ -1429,8 +1485,7 @@
                     if (!detected && ytMatch && ytMatch[1]) detected = '@' + ytMatch[1];
                     
                     if (detected) {
-                        link.subtitle = detected;
-                        this.debouncedUpdatePreview();
+                        this.applyDetectedSubtitle(link, detected);
                         return;
                     }
                     
@@ -1443,8 +1498,7 @@
                         const data = await res.json();
                         if (data.success && (data.username || data.title)) {
                             if (data.title && (!link.title || link.title === 'Nuovo Link')) link.title = data.title;
-                            if (data.username && !link.subtitle) link.subtitle = data.username;
-                            this.debouncedUpdatePreview();
+                            this.applyDetectedSubtitle(link, data.username || data.title);
                         } else {
                             alert("Non è stato possibile estrarre dati automatici da questo URL.");
                         }
