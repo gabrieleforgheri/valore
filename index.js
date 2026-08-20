@@ -551,8 +551,48 @@ app.post('/admin/fetch-url-meta', async (req, res) => {
             username = '@' + xMatch[1];
         }
 
-        // 2. If no direct username or if we want webpage title, fetch HTML
-        try {
+        // 2. oEmbed, where the site publishes one. Spotify, YouTube and the rest
+        //    serve a JavaScript shell to anything that is not a browser, so
+        //    scraping <title> off a track page came back as the literal word
+        //    "Spotify" — worse than no detection at all. The oEmbed endpoint
+        //    answers with the real name and needs no credentials. The endpoints
+        //    below are hardcoded hosts; only the url parameter comes from the
+        //    request, and it has already passed isPublicHttpUrl above.
+        const OEMBED = [
+            [/(^|\.)spotify\.com$/i, 'https://open.spotify.com/oembed?url='],
+            [/(^|\.)youtube\.com$|(^|\.)youtu\.be$/i, 'https://www.youtube.com/oembed?format=json&url='],
+            [/(^|\.)soundcloud\.com$/i, 'https://soundcloud.com/oembed?format=json&url='],
+            [/(^|\.)tiktok\.com$/i, 'https://www.tiktok.com/oembed?url='],
+            [/(^|\.)vimeo\.com$/i, 'https://vimeo.com/api/oembed.json?url=']
+        ];
+        const host = new URL(url).hostname;
+        const endpoint = (OEMBED.find(([re]) => re.test(host)) || [])[1];
+        if (endpoint) {
+            try {
+                const oRes = await fetch(endpoint + encodeURIComponent(url), {
+                    redirect: 'follow',
+                    signal: AbortSignal.timeout(8000),
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (oRes.ok) {
+                    const meta = JSON.parse((await oRes.text()).slice(0, 64 * 1024));
+                    const oTitle = clip(meta && meta.title, 200);
+                    const author = clip(meta && meta.author_name, 120);
+                    if (oTitle) {
+                        // "Rick Astley - Never Gonna Give You Up" already names the
+                        // author; only append one that is not there already.
+                        title = author && !oTitle.toLowerCase().includes(author.toLowerCase())
+                            ? oTitle + ' - ' + author
+                            : oTitle;
+                    }
+                }
+            } catch (oErr) {
+                console.log('oEmbed lookup failed:', oErr.message);
+            }
+        }
+
+        // 3. Otherwise fetch the page and read its <head>.
+        if (!title) try {
             const fetchRes = await fetch(url, {
                 redirect: 'follow',
                 signal: AbortSignal.timeout(8000),
