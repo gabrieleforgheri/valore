@@ -349,7 +349,7 @@
   <div data-sticker-anchor="socials" class="flex flex-wrap items-center justify-center gap-2 px-6">
 <% if (typeof socials !== 'undefined' && socials && socials.length > 0) { %>
   <% socials.forEach(social => { %>
-    <a data-title="Social: <%= social.platform.toUpperCase() %>" href="<%= social.url %>" target="_blank" rel="noopener noreferrer" class="z-0 cursor-pointer overflow-hidden border-0 bg-transparent p-2 transition-transform hover:scale-[115%] flex items-center justify-center text-[var(--header-text-color,var(--bodyText))] [&_svg]:pointer-events-none">
+    <a data-title="Social: <%= social.platform.toUpperCase() %>" data-track-id="social:<%= social.id %>" href="<%= social.url %>" target="_blank" rel="noopener noreferrer" class="z-0 cursor-pointer overflow-hidden border-0 bg-transparent p-2 transition-transform hover:scale-[115%] flex items-center justify-center text-[var(--header-text-color,var(--bodyText))] [&_svg]:pointer-events-none">
       <% if (social.platform === 'youtube') { %>
         <svg style="width: <%= theme.socialIconSize || '28px' %>; height: <%= theme.socialIconSize || '28px' %>;" fill="currentColor" viewBox="0 0 24 24"><title>YouTube</title><path fill-rule="evenodd" clip-rule="evenodd" d="M19.8142 5.41679C20.6763 5.64906 21.3541 6.32675 21.5832 7.18581C22 8.74483 22 11.9997 22 11.9997C22 11.9997 22 15.2545 21.5832 16.8136C21.3509 17.6757 20.6733 18.3535 19.8142 18.5825C18.2551 18.9993 12 18.9993 12 18.9993C12 18.9993 5.74801 18.9993 4.18581 18.5825C3.32358 18.3502 2.64588 17.6726 2.4168 16.8136C2 15.2545 2 11.9997 2 11.9997C2 11.9997 2 8.74483 2.4168 7.18581C2.64907 6.32358 3.32676 5.64588 4.18581 5.41679C5.74801 5 12 5 12 5C12 5 18.2551 5 19.8142 5.41679ZM15.1961 11.9992L10.0004 14.9994V8.99883L15.1961 11.9992Z"></path></svg>
       <% } else if (social.platform === 'tiktok') { %>
@@ -382,6 +382,18 @@
 <div data-section="links" id="profile-content" class="relative z-[1] w-full overflow-x-clip overflow-y-visible px-[var(--link-gap)] sm:px-[calc(var(--link-gap)*2)]" style="<%= mbStyle %>">
   <div class="flex flex-col gap-[var(--link-gap)] @container/links-container" id="links-container">
 <% links.forEach(link => { 
+  // A link switched off in the dashboard is simply not rendered. It stays in
+  // data.json — and therefore keeps its click history — instead of having to be
+  // deleted or repurposed, which is what used to lose the statistics.
+  if (link.enabled === false) return;
+
+  // Per-link title size. Left empty the Tailwind classes below decide, exactly
+  // as before; an inline style outranks them without needing !important.
+  const rawFontSize = Number(link.fontSize);
+  const titleStyle = Number.isFinite(rawFontSize) && rawFontSize > 0
+    ? 'font-size:' + Math.min(Math.max(rawFontSize, 8), 48) + 'px;'
+    : '';
+
   const urlLower = (link.url || '').toLowerCase();
   let iconChoice = link.iconChoice || (link.customIcon ? 'custom' : 'auto');
   let activePlatform = iconChoice;
@@ -471,14 +483,14 @@
     %>
     <% if (isCompactFeatured) { %>
       <!-- Option 1: Compatto / Orizzontale (Leggermente più grande del link normale) -->
-      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" class="group" tabindex="0" style="opacity:1;">
+      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-track-id="link:<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" class="group" tabindex="0" style="opacity:1;">
         <div data-testid="NewLinkContainerInner" class="grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
           <a target="_blank" rel="noopener noreferrer" href="<%= link.url %>" class="flex items-center p-3.5 gap-3.5 focus:outline-none relative w-full min-h-[76px]" data-testid="LinkClickTriggerButton">
             <% if (link.thumbnail) { %>
               <img loading="lazy" src="<%= link.thumbnail %>" alt="<%= link.title %>" class="w-16 h-16 rounded-xl object-cover shrink-0 shadow-md border border-white/20">
             <% } %>
             <div class="flex-1 min-w-0 flex flex-col justify-center">
-              <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-[15px] font-bold leading-tight text-[var(--button-style-text)] line-clamp-1"><%= link.title %></div>
+              <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-[15px] font-bold leading-tight text-[var(--button-style-text)] line-clamp-1"><%= link.title %></div>
               <div class="flex items-center text-xs pb-[2px] text-[var(--button-style-text)] opacity-70 gap-1.5 mt-1">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
@@ -502,7 +514,7 @@
       </div>
     <% } else { %>
       <!-- Options 2 to 5: Banner Featured Card -->
-      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" data-style-type="OUTLINE" data-layout="featured" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
+      <div data-testid="NewLinkContainer" id="<%= link.id %>" data-track-id="link:<%= link.id %>" data-sticker-anchor="link" data-is-featured="true" data-style-type="OUTLINE" data-layout="featured" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
         <div data-testid="NewLinkContainerInner" class="LinkContainer_LinkContainer__Kk5IQ grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
           <div class="invisible absolute top-[calc(var(--link-gap)*-1)] block" id="link-anchor-<%= link.id %>"></div>
           <a target="_blank" rel="noopener noreferrer" href="<%= link.url %>" class="grid w-full grid-cols-1 focus:outline-none grid-rows-[min-content_1fr]" data-testid="LinkClickTriggerButton">
@@ -515,7 +527,7 @@
           <div class="transition-opacity duration-200 opacity-100 flex h-full w-full justify-center">
             <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center px-8">
               <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none h-full grid-rows-1 absolute inset-0 z-10 !grid-rows-none" data-testid="LinkClickTriggerButton"><span class="sr-only"><%= link.title %></span></a>
-              <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-2 text-center text-[var(--button-style-text)]"><%= link.title %></div>
+              <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-2 text-center text-[var(--button-style-text)]"><%= link.title %></div>
               <div class="flex items-center text-xs justify-start pb-[2px] text-[var(--button-style-text)] opacity-60 gap-1">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
@@ -540,7 +552,7 @@
     <% } %>
   <% } else { %>
     <!-- Standard Link (Not Featured) -->
-    <div data-testid="NewLinkContainer" id="<%= link.id %>" data-sticker-anchor="link" data-is-featured="false" data-style-type="OUTLINE" data-layout="stack" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
+    <div data-testid="NewLinkContainer" id="<%= link.id %>" data-track-id="link:<%= link.id %>" data-sticker-anchor="link" data-is-featured="false" data-style-type="OUTLINE" data-layout="stack" data-corner-style="ROUNDED_NONE" data-shadow-type="SHADOW_NONE" class="group" tabindex="0" style="opacity:1;">
       <div data-testid="NewLinkContainerInner" class="LinkContainer_LinkContainer__Kk5IQ grid relative overflow-hidden rounded-[var(--button-style-inner-radius)] ring-[0.5px] ring-white/30 bg-[var(--button-style-background)] shadow-[--shadow-layered]" style="<%= link.transparent ? 'background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px);' : (link.bgColor ? ('background: ' + link.bgColor + ' !important;') : '') %>">
         <div class="invisible absolute top-[calc(var(--link-gap)*-1)] block" id="link-anchor-<%= link.id %>"></div>
         <a data-title="<%= link.title %>" href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none grid-rows-[min-content_1fr]" data-testid="LinkClickTriggerButton">
@@ -551,7 +563,7 @@
                   <img loading="eager" src="<%= link.thumbnail %>" alt="" class="h-full w-full object-cover">
                 </div>
               <% } %>
-              <div data-link-label="true" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-1 text-center text-[var(--button-style-text)]"><%= link.title %></div>
+              <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-1 text-center text-[var(--button-style-text)]"><%= link.title %></div>
               <div class="flex items-center text-xs justify-start px-sm text-[var(--button-style-text)] opacity-60 gap-1">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
@@ -714,7 +726,13 @@
     }
     if (!title) title = (a.innerText || '').trim() || a.getAttribute('aria-label') || a.getAttribute('title') || '';
 
-    send('/api/track/click', { linkUrl: a.href, linkTitle: title, visitId: visitId });
+    // Record which configured entry was clicked. The title and the URL are kept
+    // as well, but they are only a fallback now: they stop identifying anything
+    // the moment the entry is renamed or repointed.
+    var tracked = a.closest('[data-track-id]');
+    var trackId = tracked ? tracked.getAttribute('data-track-id') : null;
+
+    send('/api/track/click', { linkUrl: a.href, linkTitle: title, linkId: trackId, visitId: visitId });
   });
 })();
 </script>

@@ -33,6 +33,18 @@ try {
     // Column already exists
 }
 
+// Which configured entry was clicked, as "link:<id>" / "social:<id>". Before
+// this column existed a click could only be traced back through its URL and
+// title, which is ambiguous whenever a link box and a social icon point at the
+// same address, and is lost entirely as soon as either one is edited. Rows
+// recorded before the column was added have NULL here and still fall back to
+// the old matching.
+try {
+    db.exec('ALTER TABLE clicks ADD COLUMN linkId TEXT;');
+} catch (e) {
+    // Column already exists
+}
+
 const app = express();
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3000;
 
@@ -216,9 +228,11 @@ app.post('/api/track/click', (req, res) => {
         const linkUrl = clip(req.body && req.body.linkUrl, 2048);
         if (!linkUrl) return res.status(400).json({ success: false });
         const linkTitle = clip(req.body && req.body.linkTitle, 255);
+        const rawId = clip(req.body && req.body.linkId, 64);
+        const linkId = rawId && /^(link|social):[A-Za-z0-9_-]+$/.test(rawId) ? rawId : null;
         const visitId = Number(req.body && req.body.visitId);
-        const stmt = db.prepare('INSERT INTO clicks (linkUrl, linkTitle, visitId) VALUES (?, ?, ?)');
-        stmt.run(linkUrl, linkTitle, Number.isInteger(visitId) && visitId > 0 ? visitId : null);
+        const stmt = db.prepare('INSERT INTO clicks (linkUrl, linkTitle, linkId, visitId) VALUES (?, ?, ?, ?)');
+        stmt.run(linkUrl, linkTitle, linkId, Number.isInteger(visitId) && visitId > 0 ? visitId : null);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -289,9 +303,59 @@ app.post('/admin/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/admin'));
 });
 
-// Click rows are matched back to the configured links and socials by URL or by
-// the title recorded at click time. Both the dashboard render and the polling
-// endpoint need exactly this, so it lives in one place.
+// A click row records the URL and the title as they were at click time. Both are
+// needed to find the entry it belongs to again: the URL survives a rename, the
+// title survives a URL change. A link that was hidden rather than deleted is
+// still in data.links, so it keeps matching its own history — which is the whole
+// reason hiding exists as an alternative to repurposing an existing link.
+const normaliseUrl = v => (v || '').trim().replace(/\/$/, '').toLowerCase();
+
+function matchClickTarget(row, data) {
+    const title = (row.linkTitle || '').trim().toLowerCase();
+    const url = normaliseUrl(row.linkUrl);
+
+    const asSocial = s => ({ kind: 'social', id: s.id, key: 'social:' + s.id, name: 'Social: ' + (s.platform || 'link').toUpperCase() });
+    const asLink = l => ({ kind: 'link', id: l.id, key: 'link:' + l.id, name: l.title || 'Link senza titolo' });
+
+    // 1. The recorded identifier, when there is one. Unambiguous, and survives
+    //    any later edit to the title or the URL.
+    if (row.linkId) {
+        const [kind, id] = String(row.linkId).split(':');
+        if (kind === 'social') {
+            const s = data.socials.find(x => String(x.id) === id);
+            if (s) return asSocial(s);
+        } else if (kind === 'link') {
+            const l = data.links.find(x => String(x.id) === id);
+            if (l) return asLink(l);
+        }
+    }
+
+    // 2. The title recorded at click time. Socials record "Social: PLATFORM",
+    //    links record their own title, so the two never collide — which is why
+    //    this is tried before the URL.
+    if (title) {
+        const s = data.socials.find(x => `social: ${x.platform || ''}`.toLowerCase() === title);
+        if (s) return asSocial(s);
+        const l = data.links.find(x => x.title && x.title.toLowerCase() === title);
+        if (l) return asLink(l);
+    }
+
+    // 3. The URL. Ambiguous when a link box and a social icon share an address;
+    //    only reached for old rows whose title no longer matches anything.
+    if (url) {
+        const s = data.socials.find(x => normaliseUrl(x.url) === url);
+        if (s) return asSocial(s);
+        const l = data.links.find(x => normaliseUrl(x.url) === url);
+        if (l) return asLink(l);
+    }
+    // Clicks on something that no longer exists in the configuration. They are
+    // reported under their own bucket rather than dropped, so a deleted or
+    // repurposed link does not make its history disappear without a trace.
+    return { kind: 'other', id: null, key: 'other', name: 'Non più presente' };
+}
+
+// Both the dashboard render and the polling endpoint need exactly this, so it
+// lives in one place.
 function computeStats() {
     const totalVisits = db.prepare('SELECT COUNT(*) as count FROM visits').get().count;
     const totalClicks = db.prepare('SELECT COUNT(*) as count FROM clicks').get().count;
@@ -304,35 +368,23 @@ function computeStats() {
 
     const linkClicksMap = {};
     currentData.links.forEach(l => {
-        linkClicksMap[l.id] = { id: l.id, title: l.title || 'Link', count: 0 };
+        linkClicksMap[l.id] = { id: l.id, title: l.title || 'Link', enabled: l.enabled !== false, count: 0 };
     });
 
-    const normalise = v => (v || '').trim().replace(/\/$/, '').toLowerCase();
+    let orphanClicks = 0;
 
-    db.prepare('SELECT linkTitle, linkUrl, COUNT(*) as count FROM clicks GROUP BY linkTitle, linkUrl').all().forEach(row => {
-        const rawTitle = (row.linkTitle || '').trim();
-        const rawUrl = normalise(row.linkUrl);
-
-        currentData.socials.forEach(s => {
-            const sUrl = normalise(s.url);
-            const platMatch = `Social: ${(s.platform || '').toUpperCase()}`;
-            if ((sUrl && rawUrl && sUrl === rawUrl) || rawTitle.toUpperCase() === platMatch.toUpperCase()) {
-                if (socialClicksMap[s.id]) socialClicksMap[s.id].count += row.count;
-            }
-        });
-
-        currentData.links.forEach(l => {
-            const lUrl = normalise(l.url);
-            if ((lUrl && rawUrl && lUrl === rawUrl) || (l.title && rawTitle.toLowerCase() === l.title.toLowerCase())) {
-                if (linkClicksMap[l.id]) linkClicksMap[l.id].count += row.count;
-            }
-        });
+    db.prepare('SELECT linkId, linkTitle, linkUrl, COUNT(*) as count FROM clicks GROUP BY linkId, linkTitle, linkUrl').all().forEach(row => {
+        const target = matchClickTarget(row, currentData);
+        if (target.kind === 'social' && socialClicksMap[target.id]) socialClicksMap[target.id].count += row.count;
+        else if (target.kind === 'link' && linkClicksMap[target.id]) linkClicksMap[target.id].count += row.count;
+        else orphanClicks += row.count;
     });
 
     return {
         data: currentData,
         totalVisits,
         totalClicks,
+        orphanClicks,
         socialClicks: Object.values(socialClicksMap),
         linkClicks: Object.values(linkClicksMap)
     };
@@ -341,8 +393,8 @@ function computeStats() {
 // Admin Dashboard
 app.get('/admin/dashboard', (req, res) => {
     if (!req.session.loggedIn) return res.redirect('/admin');
-    const { data, totalVisits, totalClicks, socialClicks, linkClicks } = computeStats();
-    res.render('admin', { data, stats: { totalVisits, totalClicks, socialClicks, linkClicks } });
+    const { data, totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } = computeStats();
+    res.render('admin', { data, stats: { totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } });
 });
 
 // Analytics Chart & Export API
@@ -371,21 +423,28 @@ app.get('/admin/api/analytics', (req, res) => {
         startDate = maxStart.toISOString().split('T')[0];
     }
 
-    const dailyClicks = db.prepare(`
-        SELECT date(timestamp) as date, COUNT(*) as count 
-        FROM clicks 
-        WHERE date(timestamp) >= ? AND date(timestamp) <= ?
-        GROUP BY date(timestamp)
-        ORDER BY date ASC
-    `).all(startDate, endDate);
+    const currentData = getData();
 
+    // Every row is resolved to the link or social it belongs to before it leaves
+    // the server, so the dashboard can filter the chart and the CSV by target
+    // without re-implementing the URL/title matching a second time.
     const detailedClicks = db.prepare(`
-        SELECT date(timestamp) as date, linkTitle, linkUrl, COUNT(*) as count 
+        SELECT date(timestamp) as date, linkId, linkTitle, linkUrl, COUNT(*) as count 
         FROM clicks 
         WHERE date(timestamp) >= ? AND date(timestamp) <= ?
-        GROUP BY date(timestamp), linkTitle, linkUrl
+        GROUP BY date(timestamp), linkId, linkTitle, linkUrl
         ORDER BY date ASC
-    `).all(startDate, endDate);
+    `).all(startDate, endDate).map(row => {
+        const target = matchClickTarget(row, currentData);
+        return { ...row, targetKey: target.key, targetKind: target.kind, targetName: target.name };
+    });
+
+    const dailyClicks = [];
+    detailedClicks.forEach(row => {
+        const last = dailyClicks[dailyClicks.length - 1];
+        if (last && last.date === row.date) last.count += row.count;
+        else dailyClicks.push({ date: row.date, count: row.count });
+    });
 
     res.json({ success: true, startDate, endDate, dailyClicks, detailedClicks });
 });
@@ -393,8 +452,8 @@ app.get('/admin/api/analytics', (req, res) => {
 // Live Stats API (for real-time polling)
 app.get('/admin/api/stats', (req, res) => {
     if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: 'Unauthorized' });
-    const { totalVisits, totalClicks, socialClicks, linkClicks } = computeStats();
-    res.json({ success: true, totalVisits, totalClicks, socialClicks, linkClicks });
+    const { totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } = computeStats();
+    res.json({ success: true, totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks });
 });
 
 function persist(req, res) {
