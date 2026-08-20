@@ -597,6 +597,24 @@ app.post('/admin/fetch-url-meta', async (req, res) => {
     }
 });
 
+// A request bigger than the body-parser limit used to be answered with the
+// default HTML error page, which the dashboard could not parse and reported as
+// "errore di rete". Say what actually happened, in JSON.
+app.use((err, req, res, next) => {
+    if (err && (err.type === 'entity.too.large' || err.status === 413)) {
+        return res.status(413).json({
+            success: false,
+            error: 'File troppo grande per essere inviato in una sola richiesta (limite 25 MB).'
+        });
+    }
+    if (err && err.type === 'entity.parse.failed') {
+        return res.status(400).json({ success: false, error: 'Richiesta non leggibile.' });
+    }
+    console.error('Unhandled error:', err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ success: false, error: 'Errore interno del server.' });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log('Server started on port ' + PORT);
 });

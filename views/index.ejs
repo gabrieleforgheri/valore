@@ -387,6 +387,16 @@
   // deleted or repurposed, which is what used to lose the statistics.
   if (link.enabled === false) return;
 
+  // Thumbnail geometry for a normal (non-featured) link. The margin around the
+  // image and the image itself are one setting, not two: the button's minimum
+  // height is 64px, so the picture takes whatever that leaves. The size is
+  // fixed rather than tied to the actual row height, otherwise a title long
+  // enough to wrap would grow the square sideways into the text.
+  const rawInset = Number(theme.linkThumbInset);
+  const thumbInset = Number.isFinite(rawInset) ? Math.min(Math.max(Math.round(rawInset), 0), 16) : 4;
+  const thumbSize = 64 - thumbInset * 2;
+  const thumbPad = thumbInset + thumbSize + 8;
+
   // Per-link title size. Left empty the Tailwind classes below decide, exactly
   // as before; an inline style outranks them without needing !important.
   const rawFontSize = Number(link.fontSize);
@@ -557,9 +567,10 @@
         <div class="invisible absolute top-[calc(var(--link-gap)*-1)] block" id="link-anchor-<%= link.id %>"></div>
         <a data-title="<%= link.title %>" href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none grid-rows-[min-content_1fr]" data-testid="LinkClickTriggerButton">
           <div class="transition-opacity duration-200 opacity-100" style="opacity: 1;">
-            <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center <%= link.thumbnail ? 'px-16' : 'px-8' %>">
+            <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center <%= link.thumbnail ? '' : 'px-8' %>" style="<%= link.thumbnail ? ('padding-left:' + thumbPad + 'px;padding-right:' + thumbPad + 'px;') : '' %>">
               <% if (link.thumbnail) { %>
-                <div class="absolute bottom-2 left-2 top-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-[var(--button-style-inner-radius)] text-[var(--button-style-text)]">
+                <div class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center overflow-hidden text-[var(--button-style-text)]"
+                     style="left:<%= thumbInset %>px;width:<%= thumbSize %>px;height:<%= thumbSize %>px;border-radius:max(0px, calc(var(--button-style-inner-radius) - <%= thumbInset %>px));">
                   <img loading="eager" src="<%= link.thumbnail %>" alt="" class="h-full w-full object-cover">
                 </div>
               <% } %>
