@@ -786,6 +786,22 @@
 
 
 
+                            <!-- Distanza fra la foto profilo e il nome -->
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-gray-700">Foto profilo → Nome</label>
+                                    <span class="text-xs font-mono font-bold bg-white px-2 py-0.5 rounded border border-gray-200">{{ avatarGapValue }} px</span>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="range" min="0" max="96" step="2" :value="avatarGapValue"
+                                           @input="e => { profile.avatarGap = Number(e.target.value); debouncedUpdatePreview(); }"
+                                           class="flex-1 accent-black cursor-pointer">
+                                    <input type="number" min="0" max="96" :value="avatarGapValue"
+                                           @input="e => { profile.avatarGap = Number(e.target.value); debouncedUpdatePreview(); }"
+                                           class="w-16 p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-center">
+                                </div>
+                            </div>
+
                             <!-- Margine dall'Alto (Top) -->
                             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2.5">
                                 <div class="flex items-center justify-between">
@@ -1023,6 +1039,10 @@
                 });
             },
             computed: {
+                avatarGapValue() {
+                    const v = Number(this.profile.avatarGap);
+                    return Number.isFinite(v) ? Math.min(Math.max(Math.round(v), 0), 96) : 16;
+                },
                 linkThumbInset() {
                     const v = Number(this.theme.linkThumbInset);
                     return Number.isFinite(v) ? Math.min(Math.max(Math.round(v), 0), 16) : 4;

@@ -303,8 +303,12 @@
     const avatarBorder = `${profile.avatarBorderWidth || '1px'} solid ${profile.avatarBorderColor || 'rgba(255,255,255,0.2)'}`;
     const avatarStyle = `width:${avatarSize}px;height:${avatarSize}px;border-radius:${avatarRadius};border:${avatarBorder};`;
     const initial = (profile.name || '?').trim().charAt(0).toUpperCase();
+    // Space between the picture and the name. Used to be a hardcoded mb-4; the
+    // default stays 16px so an untouched page renders exactly as before.
+    const rawAvatarGap = Number(profile.avatarGap);
+    const avatarGap = Number.isFinite(rawAvatarGap) ? Math.min(Math.max(Math.round(rawAvatarGap), 0), 96) : 16;
   %>
-  <div class="mb-4 mt-2" id="profile-picture" data-sticker-anchor="avatar" aria-label="Profile avatar">
+  <div class="mt-2" style="margin-bottom:<%= avatarGap %>px;" id="profile-picture" data-sticker-anchor="avatar" aria-label="Profile avatar">
     <% if (profile.image) { %>
       <img class="object-cover shadow-lg" style="<%= avatarStyle %>object-fit:cover;" data-testid="ProfileImage" src="<%= profile.image %>" alt="<%= profile.name || 'Profilo' %>">
     <% } else { %>
