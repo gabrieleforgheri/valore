@@ -397,12 +397,24 @@
   const thumbSize = 64 - thumbInset * 2;
   const thumbPad = thumbInset + thumbSize + 8;
 
-  // Per-link title size. Left empty the Tailwind classes below decide, exactly
-  // as before; an inline style outranks them without needing !important.
+  // Per-link text size. One number drives the whole block: the title, the
+  // caption under it and the platform icon beside the caption. Setting only the
+  // title was not enough to see — at 13px against a 14px default the link looked
+  // untouched, because the two lines below it stayed exactly where they were.
+  //
+  // The ratios are the defaults themselves: at a 16px title the caption is 12px
+  // and the icon 18px, which is what the scraped Linktree markup already used.
+  // Left empty, the Tailwind classes below decide, exactly as before; an inline
+  // style outranks them without needing !important.
   const rawFontSize = Number(link.fontSize);
-  const titleStyle = Number.isFinite(rawFontSize) && rawFontSize > 0
-    ? 'font-size:' + Math.min(Math.max(rawFontSize, 8), 48) + 'px;'
-    : '';
+  const titleFont = Number.isFinite(rawFontSize) && rawFontSize > 0
+    ? Math.min(Math.max(Math.round(rawFontSize), 8), 48)
+    : null;
+  const clamp = (v, lo, hi) => Math.min(Math.max(Math.round(v), lo), hi);
+  const titleStyle = titleFont ? 'font-size:' + titleFont + 'px;' : '';
+  const captionStyle = titleFont ? 'font-size:' + clamp(titleFont * 0.75, 9, 26) + 'px;' : '';
+  const iconPx = titleFont ? clamp(titleFont * 1.125, 12, 40) : null;
+  const iconStyle = iconPx ? 'width:' + iconPx + 'px;height:' + iconPx + 'px;' : '';
 
   const urlLower = (link.url || '').toLowerCase();
   let iconChoice = link.iconChoice || (link.customIcon ? 'custom' : 'auto');
@@ -501,12 +513,12 @@
             <% } %>
             <div class="flex-1 min-w-0 flex flex-col justify-center">
               <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-[15px] font-bold leading-tight text-[var(--button-style-text)] line-clamp-1"><%= link.title %></div>
-              <div class="flex items-center text-xs pb-[2px] text-[var(--button-style-text)] opacity-70 gap-1.5 mt-1">
+              <div class="flex items-center text-xs pb-[2px] text-[var(--button-style-text)] opacity-70 gap-1.5 mt-1" style="<%= captionStyle %>">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
-                    <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
+                    <img src="<%= link.customIcon %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
                   <% } else { %>
-                    <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
+                    <svg viewBox="<%= viewBox %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
                   <% } %>
                 </div>
                 <% if (platformLabel && platformLabel.toLowerCase() !== String(profileName).toLowerCase()) { %>
@@ -538,12 +550,12 @@
             <div data-testid="NewLinkChin" data-animation-target="link-chin" class="relative flex min-h-16 w-full flex-col justify-center gap-[1px] py-3 tracking-[-0.2px] items-center px-8">
               <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer" class="grid w-full grid-cols-1 focus:outline-none h-full grid-rows-1 absolute inset-0 z-10 !grid-rows-none" data-testid="LinkClickTriggerButton"><span class="sr-only"><%= link.title %></span></a>
               <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-2 text-center text-[var(--button-style-text)]"><%= link.title %></div>
-              <div class="flex items-center text-xs justify-start pb-[2px] text-[var(--button-style-text)] opacity-60 gap-1">
+              <div class="flex items-center text-xs justify-start pb-[2px] text-[var(--button-style-text)] opacity-60 gap-1" style="<%= captionStyle %>">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
-                    <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
+                    <img src="<%= link.customIcon %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
                   <% } else { %>
-                    <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
+                    <svg viewBox="<%= viewBox %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
                   <% } %>
                 </div>
                 <% if (platformLabel && platformLabel.toLowerCase() !== String(profileName).toLowerCase()) { %>
@@ -575,12 +587,12 @@
                 </div>
               <% } %>
               <div data-link-label="true" style="<%= titleStyle %>" class="w-full overflow-hidden overflow-ellipsis text-balance text-[14px] font-medium leading-[1.2] text-[var(--button-style-text)] sm:text-[16px] line-clamp-1 text-center text-[var(--button-style-text)]"><%= link.title %></div>
-              <div class="flex items-center text-xs justify-start px-sm text-[var(--button-style-text)] opacity-60 gap-1">
+              <div class="flex items-center text-xs justify-start px-sm text-[var(--button-style-text)] opacity-60 gap-1" style="<%= captionStyle %>">
                 <div class="flex shrink-0 items-center">
                   <% if (iconChoice === 'custom' && link.customIcon) { %>
-                    <img src="<%= link.customIcon %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
+                    <img src="<%= link.customIcon %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 object-contain -ml-1" alt="icon">
                   <% } else { %>
-                    <svg viewBox="<%= viewBox %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
+                    <svg viewBox="<%= viewBox %>" style="<%= iconStyle %>" class="h-[18px] w-[18px] shrink-0 -ml-1" aria-hidden="true"><%- iconSvg %></svg>
                   <% } %>
                 </div>
                 <% if (platformLabel && platformLabel.toLowerCase() !== String(profileName).toLowerCase()) { %>

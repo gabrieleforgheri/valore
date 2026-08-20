@@ -288,12 +288,18 @@
                                         </select>
                                     </div>
 
-                                    <!-- Title Font Size -->
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="font-semibold text-gray-500">Testo:</span>
-                                        <input type="number" min="8" max="48" step="1" v-model="link.fontSize" @input="debouncedUpdatePreview" placeholder="auto" title="Dimensione del titolo di questo link, in pixel. Vuoto = automatica." class="w-16 px-1.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                        <span class="text-gray-400 font-semibold">px</span>
-                                        <button v-if="link.fontSize" @click="link.fontSize = ''; debouncedUpdatePreview()" type="button" class="text-[10px] font-bold text-gray-400 hover:text-black uppercase">auto</button>
+                                    <!-- Text Size: title, caption and icon together -->
+                                    <div class="flex items-center gap-1.5 basis-full">
+                                        <span class="font-semibold text-gray-500 shrink-0">Testo:</span>
+                                        <input type="range" min="8" max="48" step="1" :value="link.fontSize || 16"
+                                               @input="e => { link.fontSize = Number(e.target.value); debouncedUpdatePreview(); }"
+                                               class="flex-1 min-w-[80px] accent-purple-600 cursor-pointer h-1.5"
+                                               title="Dimensione del testo di questo link. Muove insieme titolo, didascalia e icona.">
+                                        <input type="number" min="8" max="48" step="1" v-model="link.fontSize" @input="debouncedUpdatePreview" placeholder="auto" class="w-14 px-1.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-purple-500">
+                                        <span class="text-gray-400 font-semibold shrink-0">px</span>
+                                        <span v-if="link.fontSize" class="text-[10px] text-gray-400 font-mono shrink-0 whitespace-nowrap">didasc. {{ captionPx(link.fontSize) }} · icona {{ iconPx(link.fontSize) }}</span>
+                                        <span v-else class="text-[10px] text-gray-400 shrink-0">automatica (16 · 12 · 18)</span>
+                                        <button v-if="link.fontSize" @click="link.fontSize = ''; debouncedUpdatePreview()" type="button" class="text-[10px] font-bold text-gray-400 hover:text-black uppercase shrink-0">auto</button>
                                     </div>
 
                                     <!-- Transparent Sfondo Toggle & Color -->
@@ -1470,6 +1476,16 @@
                     } catch(e) {
                         console.error('Errore update preview:', e);
                     }
+                },
+                // Mirrors the ratios in views/index.ejs, so the editor states what
+                // the page will actually render rather than only the title size.
+                captionPx(v) {
+                    const n = Math.min(Math.max(Math.round(Number(v)) || 16, 8), 48);
+                    return Math.min(Math.max(Math.round(n * 0.75), 9), 26);
+                },
+                iconPx(v) {
+                    const n = Math.min(Math.max(Math.round(Number(v)) || 16, 8), 48);
+                    return Math.min(Math.max(Math.round(n * 1.125), 12), 40);
                 },
                 // The two border colours are stored as CSS colour strings, because
                 // they need an alpha channel and <input type="color"> has none.
