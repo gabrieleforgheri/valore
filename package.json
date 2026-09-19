@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "build:css": "tailwindcss -c build/tailwind.config.js -i build/tailwind.input.css -o public/css/admin.css --minify",
-    "scrape": "node scrape.js"
+    "scrape": "node scrape.js",
+    "test": "node --test test/"
   },
   "keywords": [],
   "author": "",
@@ -15,8 +16,7 @@
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "ejs": "^6.0.1",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0"
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "cheerio": "^1.2.0",

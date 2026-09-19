@@ -15,15 +15,20 @@ npm start              # SERVER_PORT / PORT, default 3000
 | Variabile | Default | A cosa serve |
 |---|---|---|
 | `SERVER_PORT` / `PORT` | `3000` | porta di ascolto (Pelican imposta `SERVER_PORT`) |
-| `ADMIN_PASSWORD` | vedi sotto | password di `/admin` |
-| `SESSION_SECRET` | vedi sotto | firma del cookie di sessione |
+| `YG_ADMIN_TOKEN` | vedi sotto | segreto condiviso col portale yG |
 | `TRUST_PROXY` | `loopback, linklocal, uniquelocal` | quali proxy fidare per l'IP reale; `false` per disattivare |
-| `SECURE_COOKIES` | *(off)* | `1` quando il sito è servito solo in HTTPS |
 | `PUBLIC_URL` | *(dedotto dalla richiesta)* | URL assoluto per `canonical` e Open Graph |
 
-**Non esiste una password di default.** Se `ADMIN_PASSWORD` non è impostata, all'avvio
-viene generata una password casuale in `secrets/admin-password.txt` (modo `600`) e
-riusata a ogni riavvio. La cartella `secrets/` non è tracciata da git.
+**L'admin non ha un proprio accesso.** Non c'è pagina di login, non c'è password e non
+c'è sessione: `/admin` e `/preview` rispondono solo a chi presenta l'intestazione
+`X-yG-Token`, ed è il portale [yG Hosting](https://yrb4g.com) a presentarla dopo aver
+autenticato la persona con authentik e averne controllato il gruppo `svc-valore`.
+L'amministrazione si apre da `yrb4g.com/account/valore`.
+
+Il segreto sta in `secrets/admin-token` (modo `600`, non tracciato da git) oppure in
+`YG_ADMIN_TOKEN`. **Se manca, l'admin è spento**, non aperto: un checkout nuovo non
+espone niente. Su `rarestvalore.com` c'è anche un secondo muro, davanti: NPM risponde
+404 a `/admin` e `/preview`, quindi quelle rotte dal dominio pubblico non esistono.
 
 ## Cose da sapere prima di fare deploy
 
@@ -39,8 +44,8 @@ Stessa logica per `stats.db` e `secrets/`: stato dell'istanza, mai nel repo.
 
 ## CSS dell'admin
 
-`views/admin.ejs` e `views/login.ejs` usano un foglio Tailwind precompilato. Dopo aver
-toccato le classi in quei due file:
+`views/admin.ejs` usa un foglio Tailwind precompilato. Dopo aver toccato le classi
+in quel file:
 
 ```
 npm run build:css      # rigenera public/css/admin.css
@@ -55,8 +60,9 @@ fa **nessuna** richiesta a terze parti.
 ```
 index.js              server Express, API di tracciamento, route admin
 views/index.ejs       pagina pubblica
-views/admin.ejs       dashboard (Vue 3, monta su #app)
-views/login.ejs       login
+views/admin.ejs       dashboard (Vue 3, monta su #app). Gli indirizzi si compongono
+                      con `base`, il prefisso sotto cui il portale la monta: vuota,
+                      la variabile lascia la pagina identica a com'era
 data.json             contenuto vivo (non tracciato)
 data.default.json     seme per un'installazione nuova
 public/css/c6f65...   CSS della pagina pubblica

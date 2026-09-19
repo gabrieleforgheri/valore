@@ -2,8 +2,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const session = require('express-session');
 const Database = require('better-sqlite3');
+const { tokenValido, prefissoValido } = require('./admin-gate');
 
 // Always resolve against the app directory: the process may be started from
 // anywhere (Pelican starts it from /home/container), and a relative path would
@@ -48,28 +48,33 @@ try {
 const app = express();
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3000;
 
-// --- Admin password -------------------------------------------------------
-// Order: ADMIN_PASSWORD env > secrets/admin-password.txt > a fresh random one.
-// There is deliberately no hardcoded fallback: this repository is public, so a
-// default password in the source is the same as no password at all.
+// --- Chi entra nell'admin -------------------------------------------------
+// Questo server non autentica piu' nessuno, e non e' una dimenticanza.
+// L'admin si apre da yrb4g.com/account/valore: e' il portale yG a stabilire
+// chi sei (OIDC verso authentik) e a controllare che tu sia nel gruppo
+// svc-valore. Qui non ci sono piu' ne' password, ne' sessioni, ne' pagina di
+// accesso — una in meno da ricordare, e una in meno da bucare.
+//
+// Al posto loro un segreto condiviso col portale: le rotte dell'admin
+// rispondono solo a chi lo presenta. La porta 3011 e' raggiungibile da tutta
+// la LAN, quindi quel segreto e' l'unico muro che sta li' in mezzo — il
+// secondo muro e' NPM, che su rarestvalore.com risponde 404 a /admin.
+//
+// SI CHIUDE SE MANCA. Senza il file l'admin non e' aperto a tutti: e' spento.
+// Un checkout nuovo che non ha ancora il segreto non deve esporre niente.
 const SECRETS_DIR = path.join(__dirname, 'secrets');
-function readOrCreateSecret(fileName, label) {
-    const file = path.join(SECRETS_DIR, fileName);
+function readSecret(fileName) {
     try {
-        const existing = fs.readFileSync(file, 'utf8').trim();
-        if (existing) return existing;
+        return fs.readFileSync(path.join(SECRETS_DIR, fileName), 'utf8').trim() || null;
     } catch (e) {
-        // not created yet
+        return null;
     }
-    const generated = crypto.randomBytes(18).toString('base64url');
-    fs.mkdirSync(SECRETS_DIR, { recursive: true, mode: 0o700 });
-    fs.writeFileSync(file, generated + '\n', { mode: 0o600 });
-    console.log(`[valore] generated a new ${label} in secrets/${fileName}`);
-    return generated;
 }
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || readOrCreateSecret('admin-password.txt', 'admin password');
-const SESSION_SECRET = process.env.SESSION_SECRET || readOrCreateSecret('session-secret.txt', 'session secret');
+const ADMIN_TOKEN = process.env.YG_ADMIN_TOKEN || readSecret('admin-token');
+if (!ADMIN_TOKEN) {
+    console.warn('[valore] nessun segreto in secrets/admin-token: l\'admin resta chiuso');
+}
 
 // Behind Nginx Proxy Manager / Cloudflare every request arrives from the proxy,
 // so without this req.ip is the proxy's address on every single visit.
@@ -81,20 +86,25 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-    name: 'valore.sid',
-    secret: SESSION_SECRET,
-    resave: false,
-    // Only hand out a cookie once there is something to remember; otherwise
-    // every anonymous visitor gets a session stored in memory forever.
-    saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.SECURE_COOKIES === '1',
-        maxAge: 1000 * 60 * 60 * 12
+
+// --- Il muro davanti all'admin --------------------------------------------
+// Le due funzioni stanno in admin-gate.js, con la loro prova: `npm test`.
+//
+// 404 e non 403: a chi non ha il segreto queste rotte non risultano
+// esistere. Il portale monta l'admin sotto un prefisso e lo dichiara in
+// X-yG-Base, cosi' le pagine compongono i propri indirizzi; senza
+// quell'intestazione il server funziona da solo, come ha sempre fatto.
+function soloDaPortale(req, res, next) {
+    if (!ADMIN_TOKEN) return res.status(503).send('Amministrazione non configurata.');
+    if (!tokenValido(req.get('X-yG-Token'), ADMIN_TOKEN)) {
+        return res.status(404).send('Not Found');
     }
-}));
+    req.base = prefissoValido(req.get('X-yG-Base'));
+    next();
+}
+
+app.use('/admin', soloDaPortale);
+app.use('/preview', soloDaPortale);
 
 const dataFile = path.join(__dirname, 'data.json');
 const dataSeedFile = path.join(__dirname, 'data.default.json');
@@ -239,68 +249,33 @@ app.post('/api/track/click', (req, res) => {
     }
 });
 
+// La bozza dell'anteprima. Stava nella sessione, che non esiste piu'.
+//
+// ponytail: una sola bozza per tutto il server, non una per persona. Chi
+// amministra questa pagina condivide gia' l'unico data.json, quindi due
+// redazioni in contemporanea si pestano comunque i piedi: una bozza a testa
+// darebbe l'illusione contraria. Se un giorno servisse, la chiave e'
+// l'utente che il portale gia' conosce.
+let bozza = null;
+
 // Preview Route for Admin
 app.get('/preview', (req, res) => {
-    if (!req.session.loggedIn) return res.status(403).send('Unauthorized');
-    const draft = req.session.draft ? sanitizeData(req.session.draft) : null;
+    const draft = bozza ? sanitizeData(bozza) : null;
     const data = draft ? { ...getData(), ...draft } : getData();
     res.render('index', { ...data, siteUrl: baseUrl(req), isPreview: true });
 });
 
 app.post('/admin/preview', (req, res) => {
-    if (!req.session.loggedIn) return res.status(403).send('Unauthorized');
-    req.session.draft = req.body;
+    bozza = req.body;
     res.json({ success: true });
 });
 
-// Admin Login
+// Chi arriva sulla radice dell'admin voleva la dashboard: la pagina di
+// accesso non c'e' piu'. Il prefisso davanti e' obbligatorio, perche' un
+// `/admin/dashboard` nudo, dentro il portale, punterebbe all'amministrazione
+// di yG e non a questa.
 app.get('/admin', (req, res) => {
-    if (req.session.loggedIn) return res.redirect('/admin/dashboard');
-    res.render("login", { ...getData(), error: req.query.error || null });
-});
-
-// Simple in-memory throttle: five wrong passwords from one address and that
-// address waits. Enough to make the login form useless to a script.
-const loginAttempts = new Map();
-const LOGIN_MAX_ATTEMPTS = 5;
-const LOGIN_LOCKOUT_MS = 10 * 60 * 1000;
-
-function safeEquals(a, b) {
-    const bufA = Buffer.from(String(a));
-    const bufB = Buffer.from(String(b));
-    if (bufA.length !== bufB.length) return false;
-    return crypto.timingSafeEqual(bufA, bufB);
-}
-
-app.post('/admin/login', (req, res) => {
-    const key = req.ip || 'unknown';
-    const now = Date.now();
-    const record = loginAttempts.get(key);
-
-    if (record && record.count >= LOGIN_MAX_ATTEMPTS && now - record.last < LOGIN_LOCKOUT_MS) {
-        return res.status(429).redirect('/admin?error=locked');
-    }
-
-    if (safeEquals(req.body.password || '', ADMIN_PASSWORD)) {
-        loginAttempts.delete(key);
-        // Stop a pre-login session id from being reused after authentication.
-        req.session.regenerate(err => {
-            if (err) return res.redirect('/admin?error=1');
-            req.session.loggedIn = true;
-            res.redirect('/admin/dashboard');
-        });
-        return;
-    }
-
-    loginAttempts.set(key, {
-        count: record && now - record.last < LOGIN_LOCKOUT_MS ? record.count + 1 : 1,
-        last: now
-    });
-    res.redirect('/admin?error=1');
-});
-
-app.post('/admin/logout', (req, res) => {
-    req.session.destroy(() => res.redirect('/admin'));
+    res.redirect(`${req.base || ''}/admin/dashboard`);
 });
 
 // A click row records the URL and the title as they were at click time. Both are
@@ -392,14 +367,20 @@ function computeStats() {
 
 // Admin Dashboard
 app.get('/admin/dashboard', (req, res) => {
-    if (!req.session.loggedIn) return res.redirect('/admin');
     const { data, totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } = computeStats();
-    res.render('admin', { data, stats: { totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } });
+    res.render('admin', {
+        data,
+        stats: { totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks },
+        // Il prefisso con cui la pagina compone i propri indirizzi, e
+        // l'indirizzo pubblico per il pulsante "Vedi Sito": dentro il portale
+        // un href="/" porterebbe alla home di yrb4g.com.
+        base: req.base || '',
+        sitoPubblico: baseUrl(req)
+    });
 });
 
 // Analytics Chart & Export API
 app.get('/admin/api/analytics', (req, res) => {
-    if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: 'Unauthorized' });
 
     let startDate = req.query.startDate;
     let endDate = req.query.endDate;
@@ -451,20 +432,18 @@ app.get('/admin/api/analytics', (req, res) => {
 
 // Live Stats API (for real-time polling)
 app.get('/admin/api/stats', (req, res) => {
-    if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: 'Unauthorized' });
     const { totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks } = computeStats();
     res.json({ success: true, totalVisits, totalClicks, orphanClicks, socialClicks, linkClicks });
 });
 
 function persist(req, res) {
-    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
     const clean = sanitizeData(req.body);
     if (!clean) return res.status(400).json({ success: false, error: 'Invalid payload' });
     // Merge rather than replace: the dashboard only ever posts profile, links,
     // socials and theme, so a plain overwrite silently dropped everything else
     // in the file (the `seo` block, for one).
     saveData({ ...getData(), ...clean });
-    req.session.draft = null;
+    bozza = null;
     res.json({ success: true });
 }
 
@@ -473,7 +452,6 @@ app.post('/admin/update', persist);
 
 // Upload image endpoint
 app.post('/admin/upload-image', (req, res) => {
-    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
     try {
         const { filename, base64 } = req.body;
         if (!base64) return res.status(400).json({ success: false, error: 'No image data provided' });
@@ -521,7 +499,6 @@ function isPublicHttpUrl(raw) {
 
 // Fetch URL metadata endpoint (for automatic social handle / profile name detection)
 app.post('/admin/fetch-url-meta', async (req, res) => {
-    if (!req.session.loggedIn) return res.status(403).json({ success: false, error: 'Unauthorized' });
     try {
         const { url } = req.body;
         if (!url) return res.status(400).json({ success: false, error: 'No URL provided' });
