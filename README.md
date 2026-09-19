@@ -32,6 +32,13 @@ espone niente. Su `rarestvalore.com` c'è anche un secondo muro, davanti: NPM ri
 
 ## Cose da sapere prima di fare deploy
 
+**`allowScripts` in `package.json` non è decorativo.** `better-sqlite3` si compila
+all'installazione e senza quella voce l'installazione sul server salta lo script di
+build. Era stata aggiunta **a mano sul server**, e il risultato è che ogni `git pull`
+di `AUTO_UPDATE` si fermava su «Please commit your changes before you merge»: il
+server è rimasto indietro per settimane senza che nulla lo dicesse. Ora sta nel repo,
+dove appartiene. Se un giorno va cambiata, va cambiata **qui**.
+
 **`data.json` non è in git.** Contiene il contenuto vivo della pagina — link, testi,
 tema — e appartiene all'istanza in esecuzione, non al repository. Un checkout nuovo
 lo crea da `data.default.json` al primo avvio.
