@@ -27,8 +27,14 @@ L'amministrazione si apre da `yrb4g.com/account/valore`.
 
 Il segreto sta in `secrets/admin-token` (modo `600`, non tracciato da git) oppure in
 `YG_ADMIN_TOKEN`. **Se manca, l'admin è spento**, non aperto: un checkout nuovo non
-espone niente. Su `rarestvalore.com` c'è anche un secondo muro, davanti: NPM risponde
-404 a `/admin` e `/preview`, quindi quelle rotte dal dominio pubblico non esistono.
+espone niente.
+
+A chi non ha il segreto la risposta è **404, non 403**: dal dominio pubblico quelle
+rotte non risultano esistere, e `https://rarestvalore.com/admin` è indistinguibile da
+un indirizzo sbagliato. Si è valutato di bloccarle anche in NPM: non è stato fatto
+perché l'applicazione le chiude già da sé, e una regola scritta a mano in NPM sparisce
+in silenzio al primo salvataggio di quell'host dall'interfaccia. Resta un'opzione se
+un giorno si volesse che un segreto trapelato non basti da fuori casa.
 
 ## Cose da sapere prima di fare deploy
 
