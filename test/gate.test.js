@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { tokenValido, prefissoValido } = require('../admin-gate');
+const { tokenValido, prefissoValido, sitoValido } = require('../admin-gate');
 
 test('senza segreto atteso non entra nessuno', () => {
     // Il caso del checkout nuovo: se il file manca, l'admin e' spento, non
@@ -38,4 +38,14 @@ test('tutto cio che non e un percorso diventa nessun prefisso', () => {
     // Senza sbarra iniziale non e' un percorso assoluto.
     assert.equal(prefissoValido('account/valore'), '');
     assert.equal(prefissoValido('/a b'), '');
+});
+
+test("l'indirizzo pubblico deve essere un'origine https", () => {
+    assert.equal(sitoValido('https://rarestvalore.com'), 'https://rarestvalore.com');
+    // Niente percorso, niente porta, niente virgolette: finisce in un href.
+    assert.equal(sitoValido('https://evil.example/"><script>'), '');
+    assert.equal(sitoValido('http://rarestvalore.com'), '');
+    assert.equal(sitoValido('javascript:alert(1)'), '');
+    assert.equal(sitoValido(''), '');
+    assert.equal(sitoValido(undefined), '');
 });

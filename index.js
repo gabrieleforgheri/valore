@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
-const { tokenValido, prefissoValido } = require('./admin-gate');
+const { tokenValido, prefissoValido, sitoValido } = require('./admin-gate');
 
 // Always resolve against the app directory: the process may be started from
 // anywhere (Pelican starts it from /home/container), and a relative path would
@@ -100,6 +100,7 @@ function soloDaPortale(req, res, next) {
         return res.status(404).send('Not Found');
     }
     req.base = prefissoValido(req.get('X-yG-Base'));
+    req.sitoPubblico = sitoValido(req.get('X-yG-Sito'));
     next();
 }
 
@@ -375,7 +376,7 @@ app.get('/admin/dashboard', (req, res) => {
         // l'indirizzo pubblico per il pulsante "Vedi Sito": dentro il portale
         // un href="/" porterebbe alla home di yrb4g.com.
         base: req.base || '',
-        sitoPubblico: baseUrl(req)
+        sitoPubblico: req.sitoPubblico || baseUrl(req)
     });
 });
 

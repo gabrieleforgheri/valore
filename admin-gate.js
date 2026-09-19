@@ -32,4 +32,15 @@ function prefissoValido(grezzo) {
     return v.replace(/\/+$/, '');
 }
 
-module.exports = { tokenValido, prefissoValido };
+// L'indirizzo pubblico del sito, che il portale dichiara perche' da dentro il
+// suo tramite non e' deducibile: il server vede arrivare la richiesta su
+// 192.168.1.202:3011, e un "Vedi Sito" che punta la' e' un link rotto — oltre
+// a mettere un indirizzo interno dentro una pagina. Vale solo per chi ha gia'
+// presentato il segreto. Deve restare un'origine https, nient'altro.
+function sitoValido(grezzo) {
+    const v = String(grezzo || '');
+    if (!/^https:\/\/[A-Za-z0-9.-]+$/.test(v)) return '';
+    return v;
+}
+
+module.exports = { tokenValido, prefissoValido, sitoValido };
